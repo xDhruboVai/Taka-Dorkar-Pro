@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AnalysisView extends StatelessWidget {
+  const AnalysisView({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text('Analysis View'),
-    );
+    return Center(child: Text('Analysis View'));
   }
 }

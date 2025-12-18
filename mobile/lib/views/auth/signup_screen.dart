@@ -4,6 +4,8 @@ import '../../controllers/auth_controller.dart';
 import '../../widgets/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
   @override
   _SignupScreenState createState() => _SignupScreenState();
 }
@@ -59,26 +61,38 @@ class _SignupScreenState extends State<SignupScreen> {
                 SizedBox(height: 40),
 
                 _buildLabel("Full Name"),
-                _buildTextField(_nameController, "e.g. John Doe", Icons.person_outline),
-                
+                _buildTextField(
+                  _nameController,
+                  "e.g. John Doe",
+                  Icons.person_outline,
+                ),
+
                 SizedBox(height: 20),
 
                 _buildLabel("Email Address"),
-                _buildTextField(_emailController, "e.g. john@example.com", Icons.email_outlined),
+                _buildTextField(
+                  _emailController,
+                  "e.g. john@example.com",
+                  Icons.email_outlined,
+                ),
 
                 SizedBox(height: 20),
 
                 _buildLabel("Phone Number"),
-                _buildTextField(_phoneController, "e.g. +8801700000000", Icons.phone_android_outlined),
+                _buildTextField(
+                  _phoneController,
+                  "e.g. +8801700000000",
+                  Icons.phone_android_outlined,
+                ),
 
                 SizedBox(height: 20),
 
                 _buildLabel("Password"),
                 _buildTextField(
-                  _passwordController, 
-                  "At least 6 characters", 
-                  Icons.lock_outline, 
-                  isPassword: true
+                  _passwordController,
+                  "At least 6 characters",
+                  Icons.lock_outline,
+                  isPassword: true,
                 ),
 
                 SizedBox(height: 40),
@@ -95,49 +109,68 @@ class _SignupScreenState extends State<SignupScreen> {
                       elevation: 0,
                       shadowColor: Colors.transparent,
                     ),
-                    onPressed: authController.isLoading ? null : () async {
-                      if (_formKey.currentState!.validate()) {
-                        try {
-                          await authController.signup(
-                            _nameController.text.trim(),
-                            _emailController.text.trim(),
-                            _phoneController.text.trim(),
-                            _passwordController.text.trim(),
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Account Created Successfully"), backgroundColor: Colors.green)
-                            );
-                            Navigator.pop(context); // Go back to login
-                          }
-                        } catch (e) {
-                           if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString()), backgroundColor: Colors.red)
-                              );
-                           }
-                        }
-                      }
-                    },
+                    onPressed: authController.isLoading
+                        ? null
+                        : () async {
+                            if (_formKey.currentState!.validate()) {
+                              try {
+                                await authController.signup(
+                                  _nameController.text.trim(),
+                                  _emailController.text.trim(),
+                                  _phoneController.text.trim(),
+                                  _passwordController.text.trim(),
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Account Created Successfully",
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  Navigator.pop(context); // Go back to login
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString()),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
                     child: authController.isLoading
                         ? SizedBox(
-                            width: 24, 
-                            height: 24, 
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
                           )
                         : Text(
-                            "Create Account", 
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                            "Create Account",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                 ),
-                
+
                 SizedBox(height: 24),
-                
-                 Row(
+
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Already adhere to the platform? ", style: TextStyle(color: Colors.grey[600])),
+                    Text(
+                      "Already adhere to the platform? ",
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Text(
@@ -163,9 +196,9 @@ class _SignupScreenState extends State<SignupScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
       child: Text(
-        text, 
+        text,
         style: TextStyle(
-          fontWeight: FontWeight.w600, 
+          fontWeight: FontWeight.w600,
           color: Color(0xFF334155),
           fontSize: 14,
         ),
@@ -173,7 +206,12 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {bool isPassword = false}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    bool isPassword = false,
+  }) {
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
@@ -198,8 +236,8 @@ class _SignupScreenState extends State<SignupScreen> {
           borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-           borderRadius: BorderRadius.circular(12),
-           borderSide: BorderSide(color: Colors.red[300]!),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red[300]!),
         ),
       ),
       validator: (v) {

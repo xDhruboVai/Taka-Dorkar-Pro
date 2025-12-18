@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import '../controllers/transaction_controller.dart';
 
 class TransactionListView extends StatelessWidget {
+  const TransactionListView({super.key});
+
   @override
   Widget build(BuildContext context) {
     // In a real app, use Provider or similar to access controller
-    final controller = TransactionController(); 
-    
+    final controller = TransactionController();
+
     return Scaffold(
       appBar: AppBar(title: Text("Transactions")),
       body: FutureBuilder(
@@ -16,7 +18,7 @@ class TransactionListView extends StatelessWidget {
           if (controller.isLoading) {
             return Center(child: CircularProgressIndicator());
           }
-           return ListView.builder(
+          return ListView.builder(
             itemCount: controller.transactions.length,
             itemBuilder: (context, index) {
               final tx = controller.transactions[index];
@@ -27,7 +29,7 @@ class TransactionListView extends StatelessWidget {
               );
             },
           );
-        }
+        },
       ),
     );
   }

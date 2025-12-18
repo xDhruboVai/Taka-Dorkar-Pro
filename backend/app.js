@@ -5,9 +5,10 @@ require('dotenv').config();
 
 // MVC: Routes Import
 const authRoutes = require('./routes/authRoutes');
+const accountRoutes = require('./routes/accountRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
@@ -19,6 +20,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/accounts', accountRoutes);
 
 // Server Start
 app.listen(PORT, () => {

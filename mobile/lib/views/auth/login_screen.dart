@@ -5,6 +5,8 @@ import '../../widgets/app_theme.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -18,7 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authController = Provider.of<AuthController>(context);
 
-    const String imageUrl = "https://images.unsplash.com/photo-1710247571561-a79dd58ec1d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaW5hbmNpYWwlMjBncm93dGglMjBpbGx1c3RyYXRpb258ZW58MXx8fHwxNzY1MjA3MTM2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+    const String imageUrl =
+        "https://images.unsplash.com/photo-1710247571561-a79dd58ec1d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaW5hbmNpYWwlMjBncm93dGglMjBpbGx1c3RyYXRpb258ZW58MXx8fHwxNzY1MjA3MTM2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -46,29 +49,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           fit: BoxFit.cover,
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                              return Container(
+                            return Container(
+                              height: 180,
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
                                 height: 180,
                                 color: Colors.grey[200],
-                                child: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
-                              );
-                          },
-                          errorBuilder: (context, error, stackTrace) => 
-                            Container(
-                              height: 180, 
-                              color: Colors.grey[200], 
-                              child: Icon(Icons.error_outline, color: Colors.grey),
-                            ),
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: Colors.grey,
+                                ),
+                              ),
                         ),
                       ),
                     ),
                     SizedBox(height: 32),
-                    
+
                     Text(
                       "Welcome Back",
                       style: TextStyle(
-                        fontSize: 32, 
-                        fontWeight: FontWeight.bold, 
-                        color: Color(0xFF1E293B) // Dark slate
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B), // Dark slate
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -87,7 +97,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: "Email Address",
                         hintText: "you@example.com",
-                        prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: AppTheme.primaryColor,
+                        ),
                         filled: true,
                         fillColor: Colors.grey[50],
                         border: OutlineInputBorder(
@@ -100,10 +113,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 2,
+                          ),
                         ),
                       ),
-                      validator: (value) => value!.isEmpty ? "Please enter your email" : null,
+                      validator: (value) =>
+                          value!.isEmpty ? "Please enter your email" : null,
                     ),
                     SizedBox(height: 16),
 
@@ -114,23 +131,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: "Password",
-                        prefixIcon: Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                          color: AppTheme.primaryColor,
+                        ),
                         filled: true,
                         fillColor: Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                         enabledBorder: OutlineInputBorder(
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: Colors.grey[200]!),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 2,
+                          ),
                         ),
                       ),
-                      validator: (value) => value!.isEmpty ? "Please enter your password" : null,
+                      validator: (value) =>
+                          value!.isEmpty ? "Please enter your password" : null,
                     ),
                     SizedBox(height: 12),
 
@@ -138,7 +162,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {},
-                        child: Text("Forgot Password?", style: TextStyle(color: AppTheme.primaryColor)),
+                        child: Text(
+                          "Forgot Password?",
+                          style: TextStyle(color: AppTheme.primaryColor),
+                        ),
                       ),
                     ),
                     SizedBox(height: 24),
@@ -151,29 +178,45 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 2,
                         ),
-                        onPressed: authController.isLoading ? null : () async {
-                          if (_formKey.currentState!.validate()) {
-                            try {
-                              await authController.login(
-                                _emailController.text.trim(),
-                                _passwordController.text.trim(),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Login Successful!"), backgroundColor: Colors.green),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-                              );
-                            }
-                          }
-                        },
+                        onPressed: authController.isLoading
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  try {
+                                    await authController.login(
+                                      _emailController.text.trim(),
+                                      _passwordController.text.trim(),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Login Successful!"),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.toString()),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                         child: authController.isLoading
                             ? CircularProgressIndicator(color: Colors.white)
-                            : Text("Login", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            : Text(
+                                "Login",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                     SizedBox(height: 32),
@@ -183,12 +226,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Not a member? ", style: TextStyle(color: Colors.grey[700])),
+                        Text(
+                          "Not a member? ",
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => SignupScreen()));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => SignupScreen()),
+                            );
                           },
-                          child: Text("Register now", style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            "Register now",
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),

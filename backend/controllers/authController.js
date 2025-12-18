@@ -27,14 +27,26 @@ class AuthController {
                 password: hashedPassword,
             });
 
-            await Account.create({
-                user_id: newUser.id,
-                name: 'Personal Account',
-                type: 'cash',
-                balance: 0,
-                currency: 'BDT',
-                is_default: true,
-            });
+            const defaultAccounts = [
+                { name: 'Wallet', parent_type: 'cash', balance: 0, is_default: true },
+                { name: 'Bkash', parent_type: 'mobile_banking', balance: 0, is_default: true },
+                { name: 'Nagad', parent_type: 'mobile_banking', balance: 0, is_default: true },
+                { name: 'EBL', parent_type: 'bank', balance: 0, is_default: true },
+                { name: 'Personal Savings', parent_type: 'savings', balance: 1000, is_default: true, include_in_savings: true },
+            ];
+
+            for (const acc of defaultAccounts) {
+                await Account.create({
+                    user_id: newUser.id,
+                    name: acc.name,
+                    type: acc.parent_type,
+                    balance: acc.balance,
+                    parent_type: acc.parent_type,
+                    is_default: acc.is_default,
+                    include_in_savings: acc.include_in_savings || false,
+                    currency: 'BDT',
+                });
+            }
 
             const token = jwt.sign({ id: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'secret', {
                 expiresIn: '7d',
@@ -48,20 +60,24 @@ class AuthController {
     }
 
     static async login(req, res) {
+        console.log(`Login attempt for email: ${req.body?.email}`);
         try {
             const { email, password } = req.body;
 
             if (!email || !password) {
+                console.log('Login failed: Email or password missing');
                 return res.status(400).json({ error: 'Email and password are required' });
             }
 
             const user = await User.findByEmail(email);
             if (!user) {
+                console.log(`Login failed: User not found for ${email}`);
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, user.password_hash);
             if (!isMatch) {
+                console.log(`Login failed: Password mismatch for ${email}`);
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
@@ -69,12 +85,19 @@ class AuthController {
                 expiresIn: '7d',
             });
 
-            delete user.password_hash;
+            const userResponse = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            };
 
-            res.json({ message: 'Login successful', user, token });
+            const responsePayload = { message: 'Login successful', user: { ...userResponse }, token };
+            console.log('Login successful, sending response payload');
+            res.json(responsePayload);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Server error during login' });
+            console.error('Login error:', error);
+            res.status(500).json({ error: 'Server error during login. Please try again later.' });
         }
     }
 }

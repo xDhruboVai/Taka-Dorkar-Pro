@@ -10,6 +10,8 @@ import 'package:mobile/views/transactions_view.dart';
 import 'package:provider/provider.dart';
 
 class HomeView extends StatefulWidget {
+  const HomeView({super.key});
+
   @override
   _HomeViewState createState() => _HomeViewState();
 }
@@ -32,17 +34,16 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Taka Dorkar Pro'),
-      ),
+      appBar: AppBar(title: Text('Taka Dorkar Pro')),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
             ListTile(
@@ -50,7 +51,10 @@ class _HomeViewState extends State<HomeView> {
               title: Text('Security'),
               onTap: () {
                 Navigator.pop(context); // close the drawer
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SecurityView()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SecurityView()),
+                );
               },
             ),
             ListTile(
@@ -58,7 +62,10 @@ class _HomeViewState extends State<HomeView> {
               title: Text('AI Budget'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => AiBudgetView()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AiBudgetView()),
+                );
               },
             ),
             ListTile(
@@ -66,7 +73,10 @@ class _HomeViewState extends State<HomeView> {
               title: Text('Ask AI'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => AskAiView()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AskAiView()),
+                );
               },
             ),
             Divider(),
@@ -86,21 +96,18 @@ class _HomeViewState extends State<HomeView> {
         currentIndex: _currentIndex,
         items: [
           BottomNavigationBarItem(
-            icon: new Icon(Icons.list),
+            icon: Icon(Icons.list),
             label: 'Transactions',
           ),
           BottomNavigationBarItem(
-            icon: new Icon(Icons.account_balance_wallet),
+            icon: Icon(Icons.account_balance_wallet),
             label: 'Accounts',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart),
-            label: 'Budget',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.pie_chart), label: 'Budget'),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Analysis',
-          )
+          ),
         ],
         type: BottomNavigationBarType.fixed,
       ),

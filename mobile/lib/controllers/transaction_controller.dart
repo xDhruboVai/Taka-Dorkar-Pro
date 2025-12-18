@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction_model.dart';
-import '../services/api_service.dart'; // hypothetical service
+// hypothetical service
 
 class TransactionController with ChangeNotifier {
   List<TransactionModel> _transactions = [];
@@ -16,8 +16,18 @@ class TransactionController with ChangeNotifier {
     try {
       await Future.delayed(Duration(seconds: 1));
       _transactions = [
-        TransactionModel(id: '1', amount: 500, type: 'expense', date: DateTime.now()),
-        TransactionModel(id: '2', amount: 12000, type: 'income', date: DateTime.now()),
+        TransactionModel(
+          id: '1',
+          amount: 500,
+          type: 'expense',
+          date: DateTime.now(),
+        ),
+        TransactionModel(
+          id: '2',
+          amount: 12000,
+          type: 'income',
+          date: DateTime.now(),
+        ),
       ];
     } catch (e) {
       print(e);

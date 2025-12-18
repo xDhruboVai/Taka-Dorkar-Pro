@@ -5,6 +5,8 @@ import 'package:mobile/views/home_view.dart';
 import 'package:mobile/views/auth/login_screen.dart';
 
 class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthController>(
