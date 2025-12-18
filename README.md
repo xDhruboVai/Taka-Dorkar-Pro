@@ -78,30 +78,61 @@ npm install
 # Mobile
 cd ../mobile
 flutter pub get
-```
+## 🚀 Getting Started
 
-**Step 3: Run**
-1.  **Start Backend**:
+### 1. Backend Setup (Express.js)
+
+The backend is the heart of the application. It connects to the Supabase PostgreSQL database.
+
+**Prerequisites:**
+- Node.js installed.
+- A `.env` file in the `backend/` directory with `DB_HOST`, `DB_USER`, `DB_PASSWORD` (See `env.example`).
+
+**Steps:**
+1.  Open a terminal.
+2.  Navigate to the backend folder:
     ```bash
     cd backend
+    ```
+3.  Install dependencies:
+    ```bash
+    npm install
+    ```
+4.  **Run the server:**
+    ```bash
     npm run dev
     ```
-2.  **Start Mobile**:
-    *   List Emulators: `flutter emulators`
-    *   Launch Emulator: `flutter emulators --launch <EMULATOR_ID>`
-    *   Run App: `cd mobile` -> `flutter run`
+    *Do not run `node server.js`. The entry point is `app.js` managed by `nodemon`.*
+
+### 2. Mobile App Setup (Flutter)
+
+**Prerequisites:**
+- Flutter SDK installed.
+- Android Emulator running or Physical Device connected.
+
+**Steps:**
+1.  Open a **new** terminal.
+2.  Navigate to the mobile folder:
+    ```bash
+    cd mobile
+    ```
+3.  Get dependencies:
+    ```bash
+    flutter pub get
+    ```
+4.  **Run the app:**
+    ```bash
+    flutter run
+    ```
 
 ---
 
 ## 🛠 Troubleshooting
 
-**"Dependencies not found / Pub get failed"**
-*   Run `flutter clean` inside the `mobile` folder.
-*   Run `flutter pub get` again to re-fetch all packages.
+**Backend Connection Error:**
+If you see `getaddrinfo ENOTFOUND`, your `DB_HOST` in `.env` is incorrect. Ensure you are using the correct Supabase Connection String (Transaction Pooler or Direct).
 
-**"Gradle task assembleDebug failed"**
-*   This often happens on the first run if the internet is slow. Gradle is downloading the Android SDK/Tools.
-*   **Fix**: Wait for it to finish (can take 10+ mins). If it fails, check your internet and try again.
-
+**Android Build Failure:**
+Run `flutter clean` and then `flutter run` to look for specific errors.
 **"Android License Status Unknown"**
 *   Run: `flutter doctor --android-licenses` and accept all licenses by typing `y`.
