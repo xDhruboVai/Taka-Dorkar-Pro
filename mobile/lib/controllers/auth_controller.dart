@@ -9,6 +9,7 @@ class AuthController with ChangeNotifier {
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
+  bool get isAuthenticated => _currentUser != null;
 
   Future<void> login(String email, String password) async {
     _isLoading = true;
@@ -22,6 +23,7 @@ class AuthController with ChangeNotifier {
 
       _currentUser = UserModel.fromJson(data['user'], token: data['token']);
       await _saveToken(data['token']);
+      notifyListeners();
     } catch (e) {
       rethrow;
     } finally {
@@ -44,6 +46,7 @@ class AuthController with ChangeNotifier {
 
       _currentUser = UserModel.fromJson(data['user'], token: data['token']);
       await _saveToken(data['token']);
+      notifyListeners();
     } catch (e) {
       rethrow;
     } finally {
