@@ -1,0 +1,24 @@
+# General
+.DS_Store
+.env
+
+# Docs
+docs/
+
+# Node
+node_modules/
+npm-debug.log
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+
+# Android
+android/local.properties
+android/.gradle
+android/app/build

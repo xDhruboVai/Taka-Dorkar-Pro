@@ -1,0 +1,138 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.accounts (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  type text,
+  balance numeric DEFAULT 0,
+  currency text DEFAULT 'BDT'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  parent_type text CHECK (parent_type = ANY (ARRAY['cash'::text, 'mobile_banking'::text, 'bank'::text, 'savings'::text, 'others'::text])),
+  is_default boolean DEFAULT false,
+  include_in_savings boolean DEFAULT false,
+  CONSTRAINT accounts_pkey PRIMARY KEY (id),
+  CONSTRAINT accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.budgets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  category_id uuid NOT NULL,
+  amount numeric NOT NULL,
+  period text NOT NULL CHECK (period = ANY (ARRAY['monthly'::text, 'yearly'::text])),
+  start_date date NOT NULL,
+  end_date date,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT budgets_pkey PRIMARY KEY (id),
+  CONSTRAINT budgets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT budgets_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
+);
+CREATE TABLE public.business_members (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  business_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  role USER-DEFINED NOT NULL DEFAULT 'employee'::user_role,
+  department_id uuid,
+  joined_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT business_members_pkey PRIMARY KEY (id),
+  CONSTRAINT business_members_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT business_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT business_members_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.businesses (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  type text,
+  created_by uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT businesses_pkey PRIMARY KEY (id),
+  CONSTRAINT businesses_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.categories (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  name text NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['income'::text, 'expense'::text])),
+  icon text,
+  color text,
+  is_system boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT categories_pkey PRIMARY KEY (id),
+  CONSTRAINT categories_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.departments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  business_id uuid NOT NULL,
+  name text NOT NULL,
+  budget_limit numeric DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT departments_pkey PRIMARY KEY (id),
+  CONSTRAINT departments_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+);
+CREATE TABLE public.inventory (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  business_id uuid NOT NULL,
+  product_name text NOT NULL,
+  sku text,
+  supplier text,
+  cost_price numeric NOT NULL,
+  selling_price numeric NOT NULL,
+  current_stock integer NOT NULL DEFAULT 0,
+  reorder_point integer DEFAULT 10,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT inventory_pkey PRIMARY KEY (id),
+  CONSTRAINT inventory_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  full_name text,
+  phone_number text,
+  avatar_url text,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.salary_records (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  business_id uuid NOT NULL,
+  employee_id uuid NOT NULL,
+  amount numeric NOT NULL,
+  payment_date date NOT NULL,
+  status text DEFAULT 'paid'::text,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT salary_records_pkey PRIMARY KEY (id),
+  CONSTRAINT salary_records_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT salary_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.transactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  account_id uuid NOT NULL,
+  category_id uuid NOT NULL,
+  amount numeric NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['income'::text, 'expense'::text, 'transfer'::text])),
+  description text,
+  date date NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT transactions_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.accounts(id),
+  CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  email text NOT NULL UNIQUE,
+  name text NOT NULL,
+  phone text NOT NULL,
+  password_hash text NOT NULL,
+  role text DEFAULT 'user'::text CHECK (role = ANY (ARRAY['user'::text, 'admin'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  savings_target numeric DEFAULT 1000,
+  CONSTRAINT users_pkey PRIMARY KEY (id)
+);
