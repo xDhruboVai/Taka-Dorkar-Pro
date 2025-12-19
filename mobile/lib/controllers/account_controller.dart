@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/models/account_model.dart';
-import 'package:mobile/services/local_database.dart';
+import '../models/account_model.dart';
+import '../services/local_database.dart';
 import 'package:uuid/uuid.dart';
 
 class AccountController with ChangeNotifier {
