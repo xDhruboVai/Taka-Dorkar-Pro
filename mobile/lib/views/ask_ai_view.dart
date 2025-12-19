@@ -5,6 +5,9 @@ class AskAiView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Ask AI View'));
+    return Scaffold(
+      appBar: AppBar(title: Text('Ask AI')),
+      body: Center(child: Text('Ask AI View')),
+    );
   }
 }
