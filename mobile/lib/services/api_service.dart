@@ -14,6 +14,7 @@ class ApiService {
   static Future<Map<String, String>> _getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
+    debugPrint('DEBUG: ApiService token: $token'); // Add this line
     if (token != null) {
       return {
         'Content-Type': 'application/json',
