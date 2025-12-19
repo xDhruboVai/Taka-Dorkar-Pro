@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/controllers/auth_controller.dart';
-import 'package:mobile/views/accounts_view.dart';
+import 'package:mobile/views/accounts_screen.dart';
 import 'package:mobile/views/ai_budget_view.dart';
 import 'package:mobile/views/analysis_view.dart';
 import 'package:mobile/views/ask_ai_view.dart';
@@ -20,7 +20,7 @@ class _HomeViewState extends State<HomeView> {
   int _currentIndex = 0;
   final List<Widget> _children = [
     TransactionsView(),
-    AccountsView(),
+    AccountsScreen(),
     BudgetView(),
     AnalysisView(),
   ];

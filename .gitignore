@@ -3,7 +3,7 @@
 .env
 
 # Docs
-docs/
+
 
 # Node
 node_modules/

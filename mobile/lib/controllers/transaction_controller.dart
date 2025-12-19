@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/transaction_model.dart';
-// hypothetical service
 
 class TransactionController with ChangeNotifier {
   List<TransactionModel> _transactions = [];
