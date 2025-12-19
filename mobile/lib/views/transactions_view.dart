@@ -52,7 +52,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                       SizedBox(height: 20),
                       _buildOverviewCards(context),
                       SizedBox(height: 20),
-                       _buildPeriodButtons(),
+                       _buildPeriodButtons(context),
                       SizedBox(height: 20),
                       _buildTransactionList(context),
                     ],
@@ -142,35 +142,38 @@ class _TransactionsViewState extends State<TransactionsView> {
       // but for simplicity we will.
       final controller = Provider.of<TransactionController>(context);
       
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildOverviewCard(
+    return Row(
+      children: [
+        Expanded(
+          child: _buildOverviewCard(
             label: 'INCOME',
             amount: controller.totalIncome,
             icon: Icons.trending_up,
             color: Colors.green,
             backgroundColor: Color(0xFFE8F5E9),
           ),
-          SizedBox(width: 15),
-          _buildOverviewCard(
+        ),
+        SizedBox(width: 15),
+        Expanded(
+          child: _buildOverviewCard(
             label: 'EXPENSE',
             amount: controller.totalExpense,
             icon: Icons.trending_down,
             color: Colors.red,
             backgroundColor: Color(0xFFFFEBEE),
           ),
-          SizedBox(width: 15),
-          _buildOverviewCard(
+        ),
+        SizedBox(width: 15),
+        Expanded(
+          child: _buildOverviewCard(
             label: 'BALANCE',
             amount: controller.balance,
             icon: Icons.account_balance_wallet,
             color: Colors.blue,
             backgroundColor: Color(0xFFE3F2FD),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -182,7 +185,7 @@ class _TransactionsViewState extends State<TransactionsView> {
     required Color backgroundColor,
   }) {
     return Container(
-      width: 140,
+      // width property removed for responsive layout
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -219,7 +222,10 @@ class _TransactionsViewState extends State<TransactionsView> {
                     SizedBox(height: 15),
                     Text(label, style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
                     SizedBox(height: 5),
-                    Text('৳${NumberFormat('#,##0').format(amount)}', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('৳${NumberFormat('#,##0').format(amount)}', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
                 ],
             )
           ],
@@ -227,32 +233,42 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-   Widget _buildPeriodButtons() {
+   Widget _buildPeriodButtons(BuildContext context) {
+    // using context.watch or Provider.of(context) to listen to changes
+    final controller = Provider.of<TransactionController>(context);
+
     return Row(
       children: [
-        Expanded(child: _buildPeriodButton('Today', true)),
+        Expanded(child: _buildPeriodButton(context, 'Today', controller)),
         SizedBox(width: 10),
-        Expanded(child: _buildPeriodButton('Last Week', false)),
+        Expanded(child: _buildPeriodButton(context, 'Last Week', controller)),
         SizedBox(width: 10),
-        Expanded(child: _buildPeriodButton('Current Month', false)),
+        Expanded(child: _buildPeriodButton(context, 'Current Month', controller)),
       ],
     );
   }
 
-  Widget _buildPeriodButton(String text, bool isSelected) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.teal : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: isSelected ? null : Border.all(color: Colors.grey.shade300),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey[700],
-          fontWeight: FontWeight.w600,
+  Widget _buildPeriodButton(BuildContext context, String text, TransactionController controller) {
+    final isSelected = controller.selectedPeriod == text;
+    return GestureDetector(
+      onTap: () {
+        controller.setPeriod(text);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.teal : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: isSelected ? null : Border.all(color: Colors.grey.shade300),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: FontWeight.w600,
+            fontSize: 12, // scaled down slightly for safety
+          ),
         ),
       ),
     );
