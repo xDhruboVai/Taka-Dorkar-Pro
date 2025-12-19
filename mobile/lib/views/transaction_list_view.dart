@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart'; // assuming provider will be added
 import '../controllers/transaction_controller.dart';
 
 class TransactionListView extends StatelessWidget {
@@ -7,7 +6,6 @@ class TransactionListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // In a real app, use Provider or similar to access controller
     final controller = TransactionController();
 
     return Scaffold(

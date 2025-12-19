@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
+import '../services/local_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthController with ChangeNotifier {
@@ -10,6 +11,8 @@ class AuthController with ChangeNotifier {
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _currentUser != null;
+
+  AuthController();
 
   Future<void> login(String email, String password) async {
     _isLoading = true;
@@ -23,6 +26,8 @@ class AuthController with ChangeNotifier {
 
       _currentUser = UserModel.fromJson(data['user'], token: data['token']);
       await _saveToken(data['token']);
+      await _ensureDefaultAccounts(_currentUser!.id);
+
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -32,7 +37,12 @@ class AuthController with ChangeNotifier {
     }
   }
 
-  Future<void> signup(String name, String email, String phone, String password) async {
+  Future<void> signup(
+    String name,
+    String email,
+    String phone,
+    String password,
+  ) async {
     _isLoading = true;
     notifyListeners();
 
@@ -46,6 +56,8 @@ class AuthController with ChangeNotifier {
 
       _currentUser = UserModel.fromJson(data['user'], token: data['token']);
       await _saveToken(data['token']);
+      await _ensureDefaultAccounts(_currentUser!.id);
+
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -55,11 +67,23 @@ class AuthController with ChangeNotifier {
     }
   }
 
+  Future<void> _ensureDefaultAccounts(String userId) async {
+    try {
+      final db = LocalDatabase.instance;
+      final hasAccounts = await db.hasDefaultAccounts(userId);
+      if (!hasAccounts) {
+        await db.createDefaultAccounts(userId);
+      }
+    } catch (e) {
+      debugPrint('Error creating default accounts: $e');
+    }
+  }
+
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
   }
-  
+
   void logout() async {
     _currentUser = null;
     final prefs = await SharedPreferences.getInstance();
