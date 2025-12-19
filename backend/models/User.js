@@ -19,7 +19,7 @@ class User {
     }
 
     static async findById(id) {
-        const query = 'SELECT id, name, email, role, phone, created_at FROM users WHERE id = $1';
+        const query = 'SELECT id, name, email, role, description, phone, created_at FROM users WHERE id = $1';
         const { rows } = await pool.query(query, [id]);
         return rows[0];
     }

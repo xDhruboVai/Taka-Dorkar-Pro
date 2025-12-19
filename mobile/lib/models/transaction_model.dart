@@ -1,21 +1,10 @@
 class TransactionModel {
   final String id;
   final double amount;
-  final String type; // 'income', 'expense', or 'transfer'
+  final String type; // 'income' or 'expense'
   final DateTime date;
-  final String category;
-  final String account;
-  final String? note;
 
-  TransactionModel({
-    required this.id,
-    required this.amount,
-    required this.type,
-    required this.date,
-    required this.category,
-    required this.account,
-    this.note,
-  });
+  TransactionModel({required this.id, required this.amount, required this.type, required this.date});
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
@@ -23,9 +12,6 @@ class TransactionModel {
       amount: json['amount'].toDouble(),
       type: json['type'],
       date: DateTime.parse(json['date']),
-      category: json['category'] ?? 'Uncategorized',
-      account: json['account'] ?? 'Cash',
-      note: json['note'],
     );
   }
 
@@ -35,10 +21,6 @@ class TransactionModel {
       'amount': amount,
       'type': type,
       'date': date.toIso8601String(),
-      'category': category,
-      'account': account,
-      'note': note,
     };
   }
 }
-
