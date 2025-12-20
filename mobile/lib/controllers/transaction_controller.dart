@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction_model.dart';
+import '../services/api_service.dart';
 
 class TransactionController with ChangeNotifier {
   List<TransactionModel> _transactions = [];
@@ -8,28 +9,41 @@ class TransactionController with ChangeNotifier {
   List<TransactionModel> get transactions => _transactions;
   bool get isLoading => _isLoading;
 
-  Future<void> fetchTransactions() async {
+  // Fetch transactions for a specific user
+  Future<void> fetchTransactions(String userId) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      await Future.delayed(Duration(seconds: 1));
-      _transactions = [
-        TransactionModel(
-          id: '1',
-          amount: 500,
-          type: 'expense',
-          date: DateTime.now(),
-        ),
-        TransactionModel(
-          id: '2',
-          amount: 12000,
-          type: 'income',
-          date: DateTime.now(),
-        ),
-      ];
+      final response = await ApiService.get('/transactions?user_id=$userId');
+      if (response != null && response is List) {
+        _transactions = response.map((data) => TransactionModel.fromJson(data)).toList();
+      } else {
+        _transactions = [];
+      }
     } catch (e) {
-      print(e);
+      print("Error fetching transactions: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Add a new transaction
+  Future<bool> addTransaction(Map<String, dynamic> transactionData) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await ApiService.post('/transactions', transactionData);
+      // Refresh list after addition
+      if (transactionData['user_id'] != null) {
+        await fetchTransactions(transactionData['user_id']);
+      }
+      return true;
+    } catch (e) {
+      print("Error adding transaction: $e");
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
