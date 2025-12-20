@@ -112,23 +112,34 @@ CREATE TABLE public.salary_records (
   CONSTRAINT salary_records_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT salary_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.transactions (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+CREATE TABLE public.spam_messages (
+  id integer NOT NULL DEFAULT nextval('spam_messages_id_seq'::regclass),
   user_id uuid NOT NULL,
-  account_id uuid NOT NULL,
-  category_id uuid NOT NULL,
+  phone_number character varying NOT NULL,
+  message_text text NOT NULL,
+  detection_method character varying NOT NULL CHECK (detection_method::text = ANY (ARRAY['ml'::character varying, 'ai'::character varying, 'both'::character varying]::text[])),
+  threat_level character varying NOT NULL CHECK (threat_level::text = ANY (ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying]::text[])),
+  ai_confidence numeric,
+  ml_confidence numeric,
+  detected_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  is_read boolean DEFAULT false,
+  is_false_positive boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT spam_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT spam_messages_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.transactions (
+  id integer NOT NULL DEFAULT nextval('transactions_id_seq'::regclass),
+  user_id uuid,
+  account_id character varying,
   amount numeric NOT NULL,
-  type text NOT NULL CHECK (type = ANY (ARRAY['income'::text, 'expense'::text, 'transfer'::text])),
-  description text,
-  date date NOT NULL,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  server_updated_at timestamp without time zone DEFAULT now(),
-  is_deleted boolean DEFAULT false,
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['income'::character varying, 'expense'::character varying, 'transfer'::character varying]::text[])),
+  category character varying,
+  date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  note text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT transactions_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.accounts(id),
-  CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
+  CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.users (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

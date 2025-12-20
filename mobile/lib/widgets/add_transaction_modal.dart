@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../controllers/transaction_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/account_controller.dart';
+import '../controllers/budget_controller.dart';
+import '../services/local_database.dart';
 
 class AddTransactionModal extends StatefulWidget {
   const AddTransactionModal({super.key});
@@ -17,19 +19,9 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
   final TextEditingController _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
-  // Categories
-  final List<String> _categories = [
-    'Food & Dining',
-    'Transportation',
-    'Shopping',
-    'Bills',
-    'Salary',
-    'Investment',
-    'Rent',
-    'Groceries',
-    'Utilities',
-  ];
-  String? _selectedCategory;
+  // Categories from local DB (expense type)
+  List<Map<String, dynamic>> _categories = [];
+  String? _selectedCategoryId;
 
   // Accounts
   String? _selectedAccountId;
@@ -37,11 +29,18 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = _categories[0];
-
-    // Fetch accounts when modal opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Fetch accounts and categories when modal opens
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<AccountController>(context, listen: false).fetchAccounts();
+      final cats = await LocalDatabase.instance.getExpenseCategories(
+        'current_user',
+      );
+      setState(() {
+        _categories = cats;
+        if (_categories.isNotEmpty) {
+          _selectedCategoryId = _categories.first['id'] as String;
+        }
+      });
     });
   }
 
@@ -80,17 +79,44 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
       return;
     }
 
+    final now = DateTime.now().toIso8601String();
+    final id = const Uuid().v4();
     final newTransaction = {
+      'id': id,
       'user_id': currentUser.id,
       'amount': double.parse(_amountController.text),
       'type': _selectedType,
-      'category': _selectedCategory,
+      'category_id': _selectedCategoryId,
       'account_id': _selectedAccountId,
       'date': _selectedDate.toIso8601String(),
-      'note': _noteController.text,
+      'description': _noteController.text,
+      'created_at': now,
+      'updated_at': now,
+      'server_updated_at': null,
+      'is_deleted': 0,
+      'local_updated_at': now,
+      'needs_sync': 1,
     };
 
-    final success = await transactionController.addTransaction(newTransaction);
+    // Local-first insert for immediate budget updates
+    await LocalDatabase.instance.insert('transactions', newTransaction);
+
+    // Optional backend post (non-blocking)
+    final catName = _categories.firstWhere(
+      (c) => c['id'] == _selectedCategoryId,
+      orElse: () => {'name': null},
+    )['name'];
+    transactionController.addTransaction({
+      'user_id': currentUser.id,
+      'amount': newTransaction['amount'],
+      'type': newTransaction['type'],
+      'category': catName,
+      'account_id': newTransaction['account_id'],
+      'date': newTransaction['date'],
+      'note': newTransaction['description'],
+    });
+
+    final success = true;
     if (success) {
       // Update account balance locally immediately for UI responsiveness
       // Note: In a real app, backend should handle this sync or we double check.
@@ -110,6 +136,12 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
           currentBalance + amount,
         );
       }
+
+      // Refresh budgets to reflect new spend in current month
+      try {
+        final bc = Provider.of<BudgetController>(context, listen: false);
+        await bc.loadBudgets();
+      } catch (_) {}
 
       Navigator.pop(context);
       ScaffoldMessenger.of(
@@ -242,7 +274,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              initialValue: _selectedCategory,
+              value: _selectedCategoryId,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.grey[100],
@@ -252,9 +284,14 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
                 ),
               ),
               items: _categories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .map(
+                    (c) => DropdownMenuItem(
+                      value: c['id'] as String,
+                      child: Text(c['name'] as String),
+                    ),
+                  )
                   .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val),
+              onChanged: (val) => setState(() => _selectedCategoryId = val),
             ),
             SizedBox(height: 20),
 

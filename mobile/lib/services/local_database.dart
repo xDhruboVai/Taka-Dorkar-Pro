@@ -35,6 +35,9 @@ class LocalDatabase {
 
     await _ensureSpamTableColumns(db);
 
+    // Ensure categories table exists and has default expense categories
+    await _ensureCategoriesTableAndSeed(db);
+
     return db;
   }
 
@@ -130,6 +133,19 @@ class LocalDatabase {
         is_false_positive INTEGER DEFAULT 0
       )
     ''');
+
+    // Create categories table for budgeting and transaction classification
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS categories (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        created_at TEXT,
+        updated_at TEXT,
+        needs_sync INTEGER DEFAULT 0
+      )
+    ''');
   }
 
   Future<void> _ensureSpamTableColumns(Database db) async {
@@ -149,6 +165,60 @@ class LocalDatabase {
     await addCol('ai_confidence', 'REAL');
     await addCol('ml_confidence', 'REAL');
     await addCol('is_false_positive', 'INTEGER DEFAULT 0');
+  }
+
+  Future<void> _ensureCategoriesTableAndSeed(Database db) async {
+    // Create table if missing
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS categories (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        created_at TEXT,
+        updated_at TEXT,
+        needs_sync INTEGER DEFAULT 0
+      )
+    ''');
+
+    // Seed default expense categories for local user if empty
+    final rows = await db.rawQuery(
+      "SELECT COUNT(*) as c FROM categories WHERE user_id = ? AND type = 'expense'",
+      ['current_user'],
+    );
+    final count = rows.isNotEmpty && rows.first['c'] != null
+        ? (rows.first['c'] as num).toInt()
+        : 0;
+    if (count == 0) {
+      final uuid = const Uuid();
+      final now = DateTime.now().toIso8601String();
+      final defaults = [
+        'Food',
+        'Groceries',
+        'Transport',
+        'Bills',
+        'Rent',
+        'Utilities',
+        'Mobile Recharge',
+        'Healthcare',
+        'Education',
+        'Entertainment',
+        'Shopping',
+        'Travel',
+        'Fees',
+      ];
+      for (final name in defaults) {
+        await db.insert('categories', {
+          'id': uuid.v4(),
+          'user_id': 'current_user',
+          'name': name,
+          'type': 'expense',
+          'created_at': now,
+          'updated_at': now,
+          'needs_sync': 1,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+    }
   }
 
   Future<List<Map<String, dynamic>>> query(
@@ -350,6 +420,97 @@ class LocalDatabase {
       whereArgs: [userId, 1],
     );
     return result.isNotEmpty;
+  }
+
+  Future<List<Map<String, dynamic>>> getExpenseCategories(String userId) async {
+    final db = await database;
+    return await db.query(
+      'categories',
+      where: "user_id = ? AND type = 'expense'",
+      whereArgs: [userId],
+    );
+  }
+
+  Future<int> insertBudget(Map<String, dynamic> data) async {
+    final db = await database;
+    return await db.insert(
+      'budgets',
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> updateBudgetAmount(String id, double amount) async {
+    final db = await database;
+    return await db.update(
+      'budgets',
+      {
+        'amount': amount,
+        'local_updated_at': DateTime.now().toIso8601String(),
+        'needs_sync': 1,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> softDeleteBudget(String id) async {
+    final db = await database;
+    return await db.update(
+      'budgets',
+      {'is_deleted': 1, 'needs_sync': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getBudgetsForMonth(
+    String userId,
+    DateTime monthStart,
+  ) async {
+    final db = await database;
+    final start = DateTime(
+      monthStart.year,
+      monthStart.month,
+      1,
+    ).toIso8601String();
+    final end = DateTime(
+      monthStart.year,
+      monthStart.month + 1,
+      1,
+    ).toIso8601String();
+    return await db.query(
+      'budgets',
+      where:
+          "user_id = ? AND is_deleted = 0 AND period = 'monthly' AND start_date >= ? AND start_date < ?",
+      whereArgs: [userId, start, end],
+    );
+  }
+
+  Future<double> getSpentForCategoryMonth(
+    String userId,
+    String categoryId,
+    DateTime monthStart,
+  ) async {
+    final db = await database;
+    final start = DateTime(
+      monthStart.year,
+      monthStart.month,
+      1,
+    ).toIso8601String();
+    final end = DateTime(
+      monthStart.year,
+      monthStart.month + 1,
+      1,
+    ).toIso8601String();
+    final rows = await db.rawQuery(
+      "SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND category_id = ? AND type = 'expense' AND date >= ? AND date < ?",
+      [userId, categoryId, start, end],
+    );
+    final total = rows.isNotEmpty && rows.first['total'] != null
+        ? (rows.first['total'] as num).toDouble()
+        : 0.0;
+    return total;
   }
 
   Future<int> insertSpamMessage(Map<String, dynamic> spamData) async {

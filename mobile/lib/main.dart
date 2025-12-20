@@ -5,6 +5,7 @@ import 'package:mobile/views/auth/auth_gate.dart';
 import 'package:mobile/widgets/app_theme.dart';
 import 'package:mobile/controllers/account_controller.dart';
 import 'package:mobile/controllers/security_controller.dart';
+import 'package:mobile/controllers/budget_controller.dart';
 import 'package:mobile/services/sms_monitor_service.dart';
 import 'package:provider/provider.dart';
 
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TransactionController()),
         ChangeNotifierProvider(create: (_) => AccountController()),
         ChangeNotifierProvider(create: (_) => SecurityController()),
+        ChangeNotifierProvider(create: (_) => BudgetController()),
       ],
       child: MaterialApp(
         title: 'Taka Dorkar Pro',
