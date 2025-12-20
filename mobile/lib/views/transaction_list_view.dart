@@ -11,7 +11,7 @@ class TransactionListView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("Transactions")),
       body: FutureBuilder(
-        future: controller.fetchTransactions(),
+        future: controller.fetchTransactions('userID'),
         builder: (context, snapshot) {
           if (controller.isLoading) {
             return Center(child: CircularProgressIndicator());
