@@ -6,6 +6,7 @@ require('dotenv').config();
 // MVC: Routes Import
 const authRoutes = require('./routes/authRoutes');
 const accountRoutes = require('./routes/accountRoutes');
+const fraudDetectionRoutes = require('./routes/fraudDetectionRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
+app.use('/api/fraud', fraudDetectionRoutes);
 
 // Server Start
 app.listen(PORT, () => {

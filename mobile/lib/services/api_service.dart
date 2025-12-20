@@ -89,4 +89,56 @@ class ApiService {
       await _processResponse(response); // This will throw with details
     }
   }
+
+  // Fraud Detection APIs
+  static Future<dynamic> detectSpam({
+    required String phoneNumber,
+    required String messageText,
+    required String mlPrediction,
+    required double mlConfidence,
+  }) async {
+    return await post('/fraud/detect', {
+      'phoneNumber': phoneNumber,
+      'messageText': messageText,
+      'mlPrediction': mlPrediction,
+      'mlConfidence': mlConfidence,
+    });
+  }
+
+  static Future<List<dynamic>> getSpamMessages({
+    int limit = 50,
+    int offset = 0,
+    bool unreadOnly = false,
+  }) async {
+    final response = await get(
+      '/fraud/messages?limit=$limit&offset=$offset&unreadOnly=$unreadOnly',
+    );
+    return response['data'] as List<dynamic>;
+  }
+
+  static Future<dynamic> getSpamStats() async {
+    final response = await get('/fraud/stats');
+    return response['data'];
+  }
+
+  static Future<void> markSpamAsRead(int id) async {
+    await ApiService.patch('/fraud/messages/$id/read', {});
+  }
+
+  static Future<void> markSpamAsSafe(int id) async {
+    await ApiService.patch('/fraud/messages/$id/safe', {});
+  }
+
+  static Future<void> deleteSpamMessage(int id) async {
+    await delete('/fraud/messages/$id');
+  }
+
+  static Future<dynamic> patch(String endpoint, Map<String, dynamic> body) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: await _getHeaders(),
+      body: jsonEncode(body),
+    );
+    return _processResponse(response);
+  }
 }

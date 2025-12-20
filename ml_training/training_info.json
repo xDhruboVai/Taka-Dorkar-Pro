@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-12-20T04:38:43.435098",
+  "dataset_size": 2772,
+  "num_classes": 3,
+  "classes": [
+    "normal",
+    "promo",
+    "smish"
+  ],
+  "test_accuracy": 0.9831730723381042,
+  "max_words": 10000,
+  "max_len": 100
+}

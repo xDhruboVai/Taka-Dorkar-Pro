@@ -60,24 +60,20 @@ class AuthController {
     }
 
     static async login(req, res) {
-        console.log(`Login attempt for email: ${req.body?.email}`);
         try {
             const { email, password } = req.body;
 
             if (!email || !password) {
-                console.log('Login failed: Email or password missing');
                 return res.status(400).json({ error: 'Email and password are required' });
             }
 
             const user = await User.findByEmail(email);
             if (!user) {
-                console.log(`Login failed: User not found for ${email}`);
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, user.password_hash);
             if (!isMatch) {
-                console.log(`Login failed: Password mismatch for ${email}`);
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
@@ -92,9 +88,7 @@ class AuthController {
                 role: user.role,
             };
 
-            const responsePayload = { message: 'Login successful', user: { ...userResponse }, token };
-            console.log('Login successful, sending response payload');
-            res.json(responsePayload);
+            res.json({ message: 'Login successful', user: userResponse, token });
         } catch (error) {
             console.error('Login error:', error);
             res.status(500).json({ error: 'Server error during login. Please try again later.' });
