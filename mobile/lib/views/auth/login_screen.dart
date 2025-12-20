@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authController = Provider.of<AuthController>(context);
 
-    const String imageUrl = "https://i.imgflip.com/4/5c7lwq.jpg";
+    const String imageUrl = "https://i.imgflip.com/4/6woq7y.jpg";
 
     return Scaffold(
       backgroundColor: Colors.white,

@@ -15,6 +15,10 @@ class AccountController with ChangeNotifier {
   double get totalBalance =>
       _accounts.fold(0, (sum, item) => sum + item.balance);
 
+  double get spendableBalance => _accounts
+      .where((a) => a.parentType != 'savings')
+      .fold(0, (sum, a) => sum + a.balance);
+
   Map<String, List<Account>> get groupedAccounts {
     final Map<String, List<Account>> grouped = {};
     for (var account in _accounts) {

@@ -27,8 +27,14 @@ class _TransactionsViewState extends State<TransactionsView> {
         // Parse ID carefully
         String? userId = auth.currentUser?.id;
         if (userId != null) {
-          Provider.of<TransactionController>(context, listen: false).fetchTransactions(userId);
-          Provider.of<AccountController>(context, listen: false).fetchAccounts(); // Ensure balance is up to date
+          Provider.of<TransactionController>(
+            context,
+            listen: false,
+          ).fetchTransactions(userId);
+          Provider.of<AccountController>(
+            context,
+            listen: false,
+          ).fetchAccounts(); // Ensure balance is up to date
         }
       }
     });
@@ -40,19 +46,25 @@ class _TransactionsViewState extends State<TransactionsView> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: AddTransactionModal(),
       ),
     );
   }
 
   // Filter transactions based on selection
-  List<TransactionModel> _getFilteredTransactions(List<TransactionModel> allTransactions) {
+  List<TransactionModel> _getFilteredTransactions(
+    List<TransactionModel> allTransactions,
+  ) {
     final now = DateTime.now();
     return allTransactions.where((t) {
       final tDate = t.date.toLocal(); // Convert to local time for comparison
       if (_selectedPeriod == 'Daily') {
-        return tDate.year == now.year && tDate.month == now.month && tDate.day == now.day;
+        return tDate.year == now.year &&
+            tDate.month == now.month &&
+            tDate.day == now.day;
       } else if (_selectedPeriod == 'Weekly') {
         // Check if date is within the last 7 days
         final difference = now.difference(tDate).inDays;
@@ -67,10 +79,12 @@ class _TransactionsViewState extends State<TransactionsView> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TransactionController>(context);
-    final accountController = Provider.of<AccountController>(context); // Listen to account changes
+    final accountController = Provider.of<AccountController>(
+      context,
+    ); // Listen to account changes
     final authController = Provider.of<AuthController>(context);
     final user = authController.currentUser;
-    
+
     final allTransactions = controller.transactions;
     final filteredTransactions = _getFilteredTransactions(allTransactions);
 
@@ -91,200 +105,299 @@ class _TransactionsViewState extends State<TransactionsView> {
         child: Icon(Icons.add, color: Colors.white),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Section
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.teal,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-              ),
-              child: Column(
-                children: [
-                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Hi, ${user?.name ?? 'User'}", 
-                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text("Good Morning", 
-                            style: TextStyle(color: Colors.white70, fontSize: 14)),
-                        ],
-                      ),
-                      CircleAvatar(
-                        backgroundColor: Colors.white24,
-                        child: Icon(Icons.notifications, color: Colors.white),
-                      )
-                    ],
-                  ),
-                  SizedBox(height: 25),
-                  
-                  // Main Balance Display (Global Balance)
-                  Text("Total Balance", style: TextStyle(color: Colors.white70)),
-                  Text("৳${accountController.totalBalance.toStringAsFixed(2)}", 
-                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 25),
-
-                  // Income / Expense Row
-                  IntrinsicHeight(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildSummaryItem("Income", totalIncome, Colors.greenAccent),
-                        VerticalDivider(color: Colors.white30, thickness: 1),
-                        _buildSummaryItem("Expense", totalExpense, Colors.redAccent),
-                      ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmall = constraints.maxWidth < 360;
+            final headerPadding = EdgeInsets.all(isSmall ? 16 : 20);
+            final titleSize = isSmall ? 28.0 : 32.0;
+            final summaryValueSize = isSmall ? 18.0 : 20.0;
+            final tabPadding = EdgeInsets.symmetric(
+              horizontal: isSmall ? 16 : 20,
+            );
+            return Column(
+              children: [
+                // Header Section
+                Container(
+                  padding: headerPadding,
+                  decoration: BoxDecoration(
+                    color: Colors.teal,
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(30),
                     ),
                   ),
-                ],
-              ),
-            ),
-            
-            SizedBox(height: 20),
-
-            // Tabs 
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 20),
-              padding: EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildTab("Daily"),
-                  _buildTab("Weekly"),
-                  _buildTab("Monthly"),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 20),
-            
-            // List Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text("Recent Transactions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87))
-              ),
-            ),
-            
-            SizedBox(height: 10),
-
-            // Transaction List
-            Expanded(
-              child: controller.isLoading 
-                ? Center(child: CircularProgressIndicator())
-                : filteredTransactions.isEmpty 
-                  ? Center(child: Text("No transactions for this period", style: TextStyle(color: Colors.grey)))
-                  : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: filteredTransactions.length,
-                    itemBuilder: (context, index) {
-                      final tx = filteredTransactions[index];
-                      final accountName = Provider.of<AccountController>(context, listen: false)
-                          .accounts
-                          .firstWhere((a) => a.id == tx.accountId, orElse: () => Account(
-                            id: '', 
-                            userId: '', 
-                            name: 'Unknown', 
-                            type: '', 
-                            balance: 0.0, 
-                            parentType: '',
-                            currency: 'BDT',
-                            isDefault: false,
-                            includeInSavings: false
-                          ))
-                          .name;
-                      
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 12),
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: Offset(0, 2))],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: tx.type == 'income' ? Colors.green[50] : Colors.red[50], // Consistent colors
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                tx.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward, 
-                                color: tx.type == 'income' ? Colors.green : Colors.red,
-                                size: 24,
-                              ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Hi, ${user?.name ?? 'User'}",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                            SizedBox(width: 15),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(tx.category ?? "General", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    "${DateFormat('MMM d, yyyy • h:mm a').format(tx.date.toLocal())}${tx.note != null && tx.note!.isNotEmpty ? ' • ${tx.note}' : ''}", 
-                                    style: TextStyle(color: Colors.grey[600], fontSize: 12), 
-                                    maxLines: 1, 
-                                    overflow: TextOverflow.ellipsis
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.white24,
+                            child: Icon(
+                              Icons.notifications,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isSmall ? 16 : 25),
+
+                      // Main Balance Display (Global Balance)
+                      Text(
+                        "Spendable Balance",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      Text(
+                        "৳${accountController.spendableBalance.toStringAsFixed(2)}",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: isSmall ? 16 : 25),
+
+                      // Income / Expense Row
+                      IntrinsicHeight(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildSummaryItem(
+                              "Income",
+                              totalIncome,
+                              Colors.greenAccent,
+                              valueSize: summaryValueSize,
+                            ),
+                            VerticalDivider(
+                              color: Colors.white30,
+                              thickness: 1,
+                            ),
+                            _buildSummaryItem(
+                              "Expense",
+                              totalExpense,
+                              Colors.redAccent,
+                              valueSize: summaryValueSize,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: isSmall ? 12 : 20),
+
+                // Tabs
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: isSmall ? 16 : 20),
+                  padding: EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 5),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildTab("Daily"),
+                      _buildTab("Weekly"),
+                      _buildTab("Monthly"),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: isSmall ? 12 : 20),
+
+                // List Header
+                Padding(
+                  padding: tabPadding,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Recent Transactions",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: isSmall ? 8 : 10),
+
+                // Transaction List
+                Expanded(
+                  child: controller.isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : filteredTransactions.isEmpty
+                      ? Center(
+                          child: Text(
+                            "No transactions for this period",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: tabPadding,
+                          itemCount: filteredTransactions.length,
+                          itemBuilder: (context, index) {
+                            final tx = filteredTransactions[index];
+                            final accountName =
+                                Provider.of<AccountController>(
+                                      context,
+                                      listen: false,
+                                    ).accounts
+                                    .firstWhere(
+                                      (a) => a.id == tx.accountId,
+                                      orElse: () => Account(
+                                        id: '',
+                                        userId: '',
+                                        name: 'Unknown',
+                                        type: '',
+                                        balance: 0.0,
+                                        parentType: '',
+                                        currency: 'BDT',
+                                        isDefault: false,
+                                        includeInSavings: false,
+                                      ),
+                                    )
+                                    .name;
+
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 12),
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
                                   ),
                                 ],
                               ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  "${tx.type == 'expense' ? '-' : '+'}${tx.amount.toStringAsFixed(0)}", 
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold, 
-                                    fontSize: 16,
-                                    color: tx.type == 'income' ? Colors.green[700] : Colors.red[700]
-                                  )
-                                ),
-                                SizedBox(height: 4),
-                                Text(accountName, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                              ],
-                            )
-                          ],
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: tx.type == 'income'
+                                          ? Colors.green[50]
+                                          : Colors.red[50], // Consistent colors
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      tx.type == 'income'
+                                          ? Icons.arrow_downward
+                                          : Icons.arrow_upward,
+                                      color: tx.type == 'income'
+                                          ? Colors.green
+                                          : Colors.red,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  SizedBox(width: 15),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tx.category ?? "General",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          "${DateFormat('MMM d, yyyy • h:mm a').format(tx.date.toLocal())}${tx.note != null && tx.note!.isNotEmpty ? ' • ${tx.note}' : ''}",
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        "${tx.type == 'expense' ? '-' : '+'}${tx.amount.toStringAsFixed(0)}",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: tx.type == 'income'
+                                              ? Colors.green[700]
+                                              : Colors.red[700],
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        accountName,
+                                        style: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-            )
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildSummaryItem(String label, double amount, Color color) {
+  Widget _buildSummaryItem(
+    String label,
+    double amount,
+    Color color, {
+    double valueSize = 20,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Icon(
-              label == "Income" ? Icons.arrow_downward : Icons.arrow_upward, 
-              color: Colors.white70, size: 16
+              label == "Income" ? Icons.arrow_downward : Icons.arrow_upward,
+              color: Colors.white70,
+              size: 16,
             ),
             SizedBox(width: 4),
             Text(label, style: TextStyle(color: Colors.white70)),
           ],
         ),
         SizedBox(height: 4),
-        Text("৳${amount.toStringAsFixed(2)}", 
-          style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)), 
+        Text(
+          "৳${amount.toStringAsFixed(2)}",
+          style: TextStyle(
+            color: color,
+            fontSize: valueSize,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -300,11 +413,11 @@ class _TransactionsViewState extends State<TransactionsView> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
-          title, 
+          title,
           style: TextStyle(
             color: isSelected ? Colors.white : Colors.grey,
-            fontWeight: FontWeight.bold
-          )
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
