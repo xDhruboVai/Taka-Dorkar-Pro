@@ -1,6 +1,6 @@
 # Taka Dorkar Pro
 
-**AI-Driven Finance & Business Management System with SMS Fraud Detection**
+**AI-Driven Finance & Business Management System with Local SMS Fraud Detection**
 
 ---
 
@@ -11,6 +11,7 @@
 - Flutter SDK
 - Android Studio with emulator
 - PostgreSQL (or Supabase account)
+- Python 3.10+ (Optional, for ML training)
 
 ---
 
@@ -32,10 +33,7 @@ DB_USER=your_user
 DB_PASSWORD=your_password
 DB_NAME=taka_dorkar_pro
 DB_PORT=5432
-GEMINI_API_KEY=your_gemini_key
 ```
-
-Get Gemini API key from: https://makersuite.google.com/app/apikey
 
 **Start the backend:**
 ```powershell
@@ -86,40 +84,52 @@ flutter run
 
 ---
 
-## 📱 Running on Device
+## 🔒 Security Tab Features (New Hybrid System)
 
-```powershell
-# List connected devices/emulators
-flutter devices
+The app now uses a **Hybrid Detection Engine** that combines:
+1.  **Local Heuristics (Offline)**: Instantly detects known threats using regex and keyword matching (English & Bangla).
+2.  **Gemini AI (Online)**: Uses Google's Gemini API for deep context analysis and advanced anomaly detection.
 
-# Run on specific device
-flutter run -d <device_id>
-```
-
----
-
-## 🔒 Security Tab Features
-
-- **Real-time SMS Detection**: ML model detects spam automatically
-- **Hybrid Detection**: ML model (offline) + AI verification (online)
-- **Threat Levels**: High, Medium, Low
-- **Dashboard**: View all detected spam, statistics, mark as safe or delete
-- **Manual Testing**: Test fraud detection with custom messages (bug icon in Security tab)
+**Features:**
+- **Real-time SMS Detection**: Scans incoming messages instantly.
+- **Threat Levels**: High, Medium, Low.
+- **Dashboard**: View all detected spam, statistics, and AI confidence scores.
+- **Manual Testing**: Test fraud detection with custom messages (bug icon in Security tab).
 
 ### How to Test Fraud Detection
 
-1. Open the app and go to Security tab (drawer menu)
-2. Click the **bug icon** (🐛) in top right
-3. Click "Load Test Message" to get a sample spam SMS
-4. Click "Test Now" to run detection
-5. Wait 2 seconds and see results appear in the list
+1. Open the app and go to Security tab (drawer menu).
+2. Click the **bug icon** (🐛) in top right.
+3. Click "Load Test Message" to get a sample spam SMS.
+4. Click "Test Now" to run detection.
+5. Wait 2 seconds and see results appear in the list.
 
 **Test Message (Bangla Spam):**
 ```
 সোনালী ব্যাংক অ্যাকাউন্টে সমস্যা হয়েছে। কল করুন: +8801818788890
 ```
+This will be detected as **HIGH** threat smishing attempt.
 
-This will be detected as HIGH threat smishing attempt.
+---
+
+## 🧠 ML Training (Optional)
+
+If you want to train your own custom models or explore the dataset:
+
+1.  Navigate to the training folder:
+    ```powershell
+    cd ml_training
+    ```
+2.  Create a virtual environment:
+    ```powershell
+    python -m venv venv
+    .\venv\Scripts\activate
+    ```
+3.  Install dependencies:
+    ```powershell
+    pip install -r requirements.txt
+    ```
+    *Note: TensorFlow requires Python < 3.12. If you are on Python 3.14, some ML scripts may not run, but the app's hybrid system works independently.*
 
 ---
 
@@ -137,10 +147,16 @@ mobile/
 ├── lib/
 │   ├── views/security_view.dart               # Security dashboard
 │   ├── controllers/security_controller.dart   # State management
-│   ├── services/api_service.dart              # API calls
+│   ├── services/fraud_detection_service.dart  # Hybrid Detection Logic
+│   ├── services/gemini_service.dart           # AI Integration
 │   └── services/sms_monitor_service.dart      # SMS interception
 └── assets/
-    └── fraud_model.tflite                     # ML model
+    └── fraud_model.tflite                     # Legacy ML model (Fallback)
+
+ml_training/
+├── train_model.py                             # Model training script
+├── test_model.py                              # Model testing script
+└── requirements.txt                           # Python dependencies
 ```
 
 ---
@@ -181,7 +197,7 @@ node create_spam_table.js   # Create fraud detection table
 **SMS detection not working?**
 - Grant SMS permissions in app
 - Make sure backend is running
-- Check Gemini API key is set in `.env`
+- Check Gemini API key is set in `.env` (for backend) and configured in app
 
 **Security table error?**
 - Run `node create_spam_table.js` in backend folder

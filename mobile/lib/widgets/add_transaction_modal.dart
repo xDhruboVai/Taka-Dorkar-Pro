@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/transaction_model.dart';
 import '../controllers/transaction_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/account_controller.dart';
-import '../models/account_model.dart';
 
 class AddTransactionModal extends StatefulWidget {
   const AddTransactionModal({super.key});

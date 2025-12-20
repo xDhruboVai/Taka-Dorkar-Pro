@@ -88,4 +88,8 @@ class SecurityStats {
       thisWeek: int.parse(json['this_week'].toString()),
     );
   }
+
+  get threatsBlocked => null;
+
+  get totalScanned => null;
 }

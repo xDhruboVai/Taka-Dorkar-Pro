@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/spam_message.dart';
 import '../services/api_service.dart';
 
 class SpamDetailView extends StatelessWidget {

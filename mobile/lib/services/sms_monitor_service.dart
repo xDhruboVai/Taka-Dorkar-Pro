@@ -17,7 +17,7 @@ class SmsMonitorService {
   static Future<bool> requestPermissions() async {
     final smsPermission = await Permission.sms.request();
     final notificationPermission = await Permission.notification.request();
-    
+
     return smsPermission.isGranted && notificationPermission.isGranted;
   }
 
@@ -41,7 +41,14 @@ class SmsMonitorService {
     }
 
     // Initialize fraud detection
-    await FraudDetectionService.initialize();
+    try {
+      await FraudDetectionService.initialize();
+    } catch (e) {
+      print(
+        '❌ Error initializing FraudDetectionService: $e. Continuing without ML detection.',
+      );
+      // Continue execution even if initialization fails
+    }
     await NotificationService.initialize();
 
     // Catch-up: Scan last 20 messages for missed spam
@@ -58,12 +65,15 @@ class SmsMonitorService {
   static Future<void> scanInbox({int limit = 50}) async {
     try {
       print('🔍 Scanning last $limit inbox messages...');
-      final List<dynamic> messages = await _channel.invokeMethod('getInboxMessages', {'limit': limit});
-      
+      final List<dynamic> messages = await _channel.invokeMethod(
+        'getInboxMessages',
+        {'limit': limit},
+      );
+
       for (var msg in messages) {
         final String senderAddress = msg['sender'] ?? 'Unknown';
         final String text = msg['message'] ?? '';
-        
+
         // Skip if empty
         if (text.isEmpty) continue;
 
@@ -103,13 +113,17 @@ class SmsMonitorService {
   }
 
   // Process and detect spam
-  static Future<void> _processSms(String phoneNumber, String messageText, {bool silent = false}) async {
+  static Future<void> _processSms(
+    String phoneNumber,
+    String messageText, {
+    bool silent = false,
+  }) async {
     try {
       if (messageText.isEmpty) return;
 
       // Ensure services are initialized
       await FraudDetectionService.initialize();
-      
+
       // Run ML detection
       final result = await FraudDetectionService.detectSpam(messageText);
       final isSpam = result['isSpam'] as bool;
@@ -122,7 +136,7 @@ class SmsMonitorService {
           userId: 'local', // Will be updated on sync
           phoneNumber: phoneNumber,
           messageText: messageText,
-          detectionMethod: 'ml',
+          detectionMethod: 'local',
           threatLevel: threatLevel,
           mlConfidence: confidence,
           detectedAt: DateTime.now(),

@@ -2,12 +2,21 @@ import '../models/spam_message.dart';
 import './local_database.dart';
 import './api_service.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 class SecurityRepository {
+  static final SecurityRepository _instance = SecurityRepository._internal();
+  factory SecurityRepository() => _instance;
+  SecurityRepository._internal();
+
   final LocalDatabase _db = LocalDatabase.instance;
+  final _messageStreamController = StreamController<void>.broadcast();
+
+  Stream<void> get onMessageAdded => _messageStreamController.stream;
 
   Future<void> saveSpamLocally(SpamMessage message) async {
     await _db.insertSpamMessage(message.toJson());
+    _messageStreamController.add(null);
   }
 
   Future<List<SpamMessage>> getSpamMessages() async {

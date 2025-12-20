@@ -24,6 +24,9 @@ class NotificationService {
       },
     );
 
+    // Request permissions after initialization
+    await requestPermissions();
+
     _isInitialized = true;
     print('✅ NotificationService initialized');
   }
@@ -34,11 +37,13 @@ class NotificationService {
     required String threatLevel,
   }) async {
     print('🔔 Attempting to show notification for: $phoneNumber');
+    print('Threat level: $threatLevel');
     await initialize();
 
     final severityColor = threatLevel == 'high' 
         ? const Color(0xFFFF0000) 
         : const Color(0xFFFF9800);
+    print('Severity color: $severityColor');
 
     final androidDetails = AndroidNotificationDetails(
       'security_alerts_v2',

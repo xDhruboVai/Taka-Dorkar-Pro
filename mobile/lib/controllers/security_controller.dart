@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import '../models/spam_message.dart';
 import '../services/sms_monitor_service.dart';
-import '../services/fraud_detection_service.dart';
 import '../services/security_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SecurityController extends ChangeNotifier {
   final SecurityRepository _repository = SecurityRepository();
-  
+
   List<SpamMessage> _messages = [];
   SecurityStats? _stats;
   bool _isLoading = false;
   String? _error;
+
+  SecurityController() {
+    _repository.onMessageAdded.listen((_) {
+      loadData();
+    });
+  }
 
   List<SpamMessage> get messages => _messages;
   SecurityStats? get stats => _stats;
@@ -20,16 +25,43 @@ class SecurityController extends ChangeNotifier {
 
   // Diagnostic Getters
   bool get isMonitoring => SmsMonitorService.isMonitoring;
-  bool get isModelLoaded => FraudDetectionService.isInitialized;
-  
+  // Hybrid service is always initialized
+  bool get isModelLoaded => true;
+
   Future<bool> get hasSmsPermission async => await Permission.sms.isGranted;
-  Future<bool> get hasNotificationPermission async => await Permission.notification.isGranted;
+  Future<bool> get hasNotificationPermission async =>
+      await Permission.notification.isGranted;
 
   Future<void> toggleMonitoring() async {
     if (isMonitoring) {
       SmsMonitorService.stopMonitoring();
-    } else {
+      notifyListeners();
+      return;
+    }
+
+    // Check permissions first
+    final hasSms = await Permission.sms.isGranted;
+    final hasNotif = await Permission.notification.isGranted;
+
+    if (!hasSms || !hasNotif) {
+      // Request permissions
+      final smsResult = await Permission.sms.request();
+      final notifResult = await Permission.notification.request();
+
+      if (!smsResult.isGranted || !notifResult.isGranted) {
+        _error = 'Permissions required: SMS and Notifications';
+        notifyListeners();
+        return;
+      }
+    }
+
+    // Try to start monitoring
+    try {
       await SmsMonitorService.startMonitoring();
+      _error = null;
+    } catch (e) {
+      _error = 'Failed to start monitoring: ${e.toString()}';
+      debugPrint('Toggle error: $e');
     }
     notifyListeners();
   }

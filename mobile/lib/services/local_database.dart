@@ -34,6 +34,9 @@ class LocalDatabase {
       )
     ''');
 
+    // Ensure required columns exist for SpamMessage model
+    await _ensureSpamTableColumns(db);
+
     return db;
   }
 
@@ -115,15 +118,40 @@ class LocalDatabase {
     await db.execute('''
       CREATE TABLE spam_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
         phone_number TEXT NOT NULL,
         message_text TEXT NOT NULL,
         threat_level TEXT NOT NULL,
         prediction TEXT NOT NULL,
         confidence REAL NOT NULL,
+        detection_method TEXT,
+        ai_confidence REAL,
+        ml_confidence REAL,
         detected_at TEXT NOT NULL,
-        is_read INTEGER DEFAULT 0
+        is_read INTEGER DEFAULT 0,
+        is_false_positive INTEGER DEFAULT 0
       )
     ''');
+  }
+
+  // Adds missing columns to spam_messages table safely for existing installs
+  Future<void> _ensureSpamTableColumns(Database db) async {
+    final columnsInfo = await db.rawQuery('PRAGMA table_info(spam_messages)');
+    final existingColumns = {
+      for (var row in columnsInfo) row['name'] as String,
+    };
+
+    Future<void> addCol(String name, String type) async {
+      if (!existingColumns.contains(name)) {
+        await db.execute('ALTER TABLE spam_messages ADD COLUMN $name $type');
+      }
+    }
+
+    await addCol('user_id', 'TEXT');
+    await addCol('detection_method', 'TEXT');
+    await addCol('ai_confidence', 'REAL');
+    await addCol('ml_confidence', 'REAL');
+    await addCol('is_false_positive', 'INTEGER DEFAULT 0');
   }
 
   Future<List<Map<String, dynamic>>> query(
@@ -336,6 +364,17 @@ class LocalDatabase {
     if (!spamData.containsKey('detected_at')) {
       spamData['detected_at'] = DateTime.now().toIso8601String();
     }
+    // Provide sensible defaults for optional fields to avoid NULL issues
+    spamData['user_id'] ??= 'local';
+    spamData['detection_method'] ??= 'local';
+    spamData['is_false_positive'] ??= 0;
+    // Backfill legacy NOT NULL columns so inserts never fail
+    // Use threat_level as prediction if not provided
+    spamData['prediction'] ??= spamData['threat_level'] ?? 'unknown';
+    // Use ml/ai confidence as generic confidence fallback
+    final mlConf = spamData['ml_confidence'];
+    final aiConf = spamData['ai_confidence'];
+    spamData['confidence'] ??= (mlConf ?? aiConf ?? 0.8);
     return await db.insert(
       'spam_messages',
       spamData,
@@ -369,13 +408,55 @@ class LocalDatabase {
     final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
     final weekStart = now.subtract(Duration(days: 7)).toIso8601String();
 
-    final total = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages')) ?? 0;
-    final unread = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE is_read = 0')) ?? 0;
-    final high = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE threat_level = "high"')) ?? 0;
-    final medium = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE threat_level = "medium"')) ?? 0;
-    final low = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE threat_level = "low"')) ?? 0;
-    final today = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE detected_at >= ?', [todayStart])) ?? 0;
-    final week = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE detected_at >= ?', [weekStart])) ?? 0;
+    final total =
+        Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM spam_messages'),
+        ) ??
+        0;
+    final unread =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM spam_messages WHERE is_read = 0',
+          ),
+        ) ??
+        0;
+    final high =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM spam_messages WHERE threat_level = 'high'",
+          ),
+        ) ??
+        0;
+    final medium =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM spam_messages WHERE threat_level = 'medium'",
+          ),
+        ) ??
+        0;
+    final low =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM spam_messages WHERE threat_level = 'low'",
+          ),
+        ) ??
+        0;
+    final today =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM spam_messages WHERE detected_at >= ?',
+            [todayStart],
+          ),
+        ) ??
+        0;
+    final week =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM spam_messages WHERE detected_at >= ?',
+            [weekStart],
+          ),
+        ) ??
+        0;
 
     return {
       'total': total,

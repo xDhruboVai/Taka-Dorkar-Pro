@@ -53,6 +53,9 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0") {
+        exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
+        exclude(group = "org.tensorflow", module = "tensorflow-lite")
+    }
 }
