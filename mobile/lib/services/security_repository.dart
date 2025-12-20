@@ -26,28 +26,21 @@ class SecurityRepository {
 
   Future<SecurityStats> getStats() async {
     try {
-      // Try to get from backend first
       final backendStats = await ApiService.getSpamStats();
       return SecurityStats.fromJson(backendStats);
     } catch (e) {
       debugPrint('Failed to fetch backend stats, using local: $e');
-      // Fallback to local stats
       final localStats = await _db.getLocalSecurityStats();
       return SecurityStats.fromJson(localStats);
     }
   }
 
-  Future<void> syncSpam() async {
-    // In Security 2.0, we can implement a more complex sync logic here if needed
-    // For now, let's focus on the local-first flow
-  }
+  Future<void> syncSpam() async {}
 
   Future<void> markAsRead(int id) async {
     await _db.markSpamAsRead(id);
     // Optionally fire-and-forget sync to backend
-    try {
-      // Assuming ApiService has a markAsRead method or similar
-    } catch (_) {}
+    try {} catch (_) {}
   }
 
   Future<void> deleteMessage(int id) async {

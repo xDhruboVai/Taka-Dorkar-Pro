@@ -1,15 +1,11 @@
 import 'dart:async';
 
 class FraudDetectionService {
-  // Local Detection System (Rule-based AI)
-  // Uses keyword matching and pattern recognition (Regex) to detect spam/fraud.
-
   static Future<void> initialize() async {
     print('✅ FraudDetectionService initialized (Local Mode)');
   }
 
   static Future<Map<String, dynamic>> detectSpam(String messageText) async {
-    // Perform local analysis
     print(
       '🔍 Analyzing locally: "${messageText.length > 20 ? messageText.substring(0, 20) + '...' : messageText}"',
     );
@@ -19,9 +15,7 @@ class FraudDetectionService {
   static Map<String, dynamic> _localHeuristicCheck(String text) {
     final lowerText = text.toLowerCase();
 
-    // Bangla & English Keywords
     final smishKeywords = [
-      // English
       'urgent',
       'verify',
       'account',
@@ -31,9 +25,20 @@ class FraudDetectionService {
       'bank',
       'alert',
       'update',
-      'blocked', 'deactivated', 'winner', 'won', 'prize', 'lottery', 'claim',
-      'password', 'otp', 'pin', 'cvv', 'expire', 'unusual', 'activity',
-      // Bangla
+      'blocked',
+      'deactivated',
+      'winner',
+      'won',
+      'prize',
+      'lottery',
+      'claim',
+      'password',
+      'otp',
+      'pin',
+      'cvv',
+      'expire',
+      'unusual',
+      'activity',
       'জরুরী',
       'বন্ধ',
       'অ্যাকাউন্ট',
@@ -46,13 +51,20 @@ class FraudDetectionService {
       'অভিনন্দন',
       'জিতেছেন',
       'জিত',
-      'লটারি', 'বিকাশ', 'নগদ', 'রকেট', 'অফিস', 'হেল্পলাইন',
-      'পাসওয়ার্ড', 'পিন', 'মেয়াদ',
-      'নম্বর', 'ক্লিক করুন',
+      'লটারি',
+      'বিকাশ',
+      'নগদ',
+      'রকেট',
+      'অফিস',
+      'হেল্পলাইন',
+      'পাসওয়ার্ড',
+      'পিন',
+      'মেয়াদ',
+      'নম্বর',
+      'ক্লিক করুন',
     ];
 
     final promoKeywords = [
-      // English
       'offer',
       'discount',
       'sale',
@@ -62,9 +74,18 @@ class FraudDetectionService {
       'promo',
       'cashback',
       'deal',
-      'shop', 'buy', 'get', 'free',
-      // Bangla
-      'অফার', 'ছাড়', 'ডিসকাউন্ট', 'ক্যাশব্যাক', 'ডিল', 'কিনুন', 'ফ্রি', 'মাত্র',
+      'shop',
+      'buy',
+      'get',
+      'free',
+      'অফার',
+      'ছাড়',
+      'ডিসকাউন্ট',
+      'ক্যাশব্যাক',
+      'ডিল',
+      'কিনুন',
+      'ফ্রি',
+      'মাত্র',
     ];
 
     int smishCount = 0;
@@ -77,7 +98,6 @@ class FraudDetectionService {
       if (lowerText.contains(k)) promoCount++;
     }
 
-    // Regex Checks
     final hasLink = RegExp(
       r'http[s]?://|www\.|bit\.ly|goo\.gl|tinyurl|t\.co|is\.gd|buff\.ly|ow\.ly',
     ).hasMatch(lowerText);
@@ -85,7 +105,6 @@ class FraudDetectionService {
     final hasMoney = RegExp(r'tk|taka|bdt|\$|৳').hasMatch(lowerText);
     final mentionsNumber = lowerText.contains('নম্বর');
 
-    // High Threat: Link + Urgent Keywords
     if (hasLink && smishCount > 0) {
       return {
         'isSpam': true,
@@ -96,7 +115,6 @@ class FraudDetectionService {
       };
     }
 
-    // High Threat: Multiple Urgent Keywords
     if (smishCount >= 2 || (smishCount >= 1 && (hasPhone || mentionsNumber))) {
       return {
         'isSpam': true,
@@ -107,7 +125,6 @@ class FraudDetectionService {
       };
     }
 
-    // Medium Threat: Link + Money/Promo
     if (hasLink && (hasMoney || promoCount > 0)) {
       return {
         'isSpam': true,
@@ -118,7 +135,6 @@ class FraudDetectionService {
       };
     }
 
-    // Low Threat: Promo Keywords
     if (promoCount >= 1) {
       return {
         'isSpam': true,

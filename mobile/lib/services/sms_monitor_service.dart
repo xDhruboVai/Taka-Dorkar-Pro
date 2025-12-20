@@ -13,7 +13,6 @@ class SmsMonitorService {
 
   static bool get isMonitoring => _isMonitoring;
 
-  // Request SMS permissions
   static Future<bool> requestPermissions() async {
     final smsPermission = await Permission.sms.request();
     final notificationPermission = await Permission.notification.request();
@@ -21,13 +20,11 @@ class SmsMonitorService {
     return smsPermission.isGranted && notificationPermission.isGranted;
   }
 
-  // Check if permissions are granted
   static Future<bool> hasPermissions() async {
     final smsStatus = await Permission.sms.status;
     return smsStatus.isGranted;
   }
 
-  // Start monitoring SMS
   static Future<void> startMonitoring() async {
     if (_isMonitoring) return;
 
@@ -40,28 +37,23 @@ class SmsMonitorService {
       }
     }
 
-    // Initialize fraud detection
     try {
       await FraudDetectionService.initialize();
     } catch (e) {
       print(
         '❌ Error initializing FraudDetectionService: $e. Continuing without ML detection.',
       );
-      // Continue execution even if initialization fails
     }
     await NotificationService.initialize();
 
-    // Catch-up: Scan last 20 messages for missed spam
     await scanInbox(limit: 20);
 
-    // Listen for incoming SMS via MethodChannel
     _channel.setMethodCallHandler(_handleMethodCall);
 
     _isMonitoring = true;
     print('✅ SMS monitoring started (via MethodChannel)');
   }
 
-  // Scan recent inbox messages for missed spam
   static Future<void> scanInbox({int limit = 50}) async {
     try {
       print('🔍 Scanning last $limit inbox messages...');
@@ -74,10 +66,8 @@ class SmsMonitorService {
         final String senderAddress = msg['sender'] ?? 'Unknown';
         final String text = msg['message'] ?? '';
 
-        // Skip if empty
         if (text.isEmpty) continue;
 
-        // Process silently
         await _processSms(senderAddress, text, silent: true);
       }
       print('✅ Inbox scan complete');
@@ -86,14 +76,12 @@ class SmsMonitorService {
     }
   }
 
-  // Stop monitoring
   static void stopMonitoring() {
     _channel.setMethodCallHandler(null);
     _isMonitoring = false;
     print('⏹️ SMS monitoring stopped');
   }
 
-  // Handle incoming method calls from native side
   static Future<dynamic> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
       case 'onSmsReceived':
@@ -112,7 +100,6 @@ class SmsMonitorService {
     }
   }
 
-  // Process and detect spam
   static Future<void> _processSms(
     String phoneNumber,
     String messageText, {
@@ -121,10 +108,8 @@ class SmsMonitorService {
     try {
       if (messageText.isEmpty) return;
 
-      // Ensure services are initialized
       await FraudDetectionService.initialize();
 
-      // Run ML detection
       final result = await FraudDetectionService.detectSpam(messageText);
       final isSpam = result['isSpam'] as bool;
       final prediction = result['prediction'] as String;
@@ -142,7 +127,6 @@ class SmsMonitorService {
           detectedAt: DateTime.now(),
         );
 
-        // ALWAYS save locally first (Security 2.0 Core)
         await _repository.saveSpamLocally(spamMsg);
 
         if (!silent) {
@@ -154,7 +138,6 @@ class SmsMonitorService {
           );
         }
 
-        // Background sync to backend
         try {
           await ApiService.detectSpam(
             phoneNumber: phoneNumber,
@@ -171,7 +154,6 @@ class SmsMonitorService {
     }
   }
 
-  // Test notification
   static Future<void> testNotification() async {
     await NotificationService.showSpamDetected(
       phoneNumber: 'SEC-TEST',

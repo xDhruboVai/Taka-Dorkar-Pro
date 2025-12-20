@@ -8,7 +8,9 @@ class NotificationService {
   static Future<void> initialize() async {
     if (_isInitialized) return;
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
 
     const settings = InitializationSettings(
@@ -19,12 +21,10 @@ class NotificationService {
     await _notifications.initialize(
       settings,
       onDidReceiveNotificationResponse: (details) {
-        // Handle notification tap
         print('Notification tapped: ${details.payload}');
       },
     );
 
-    // Request permissions after initialization
     await requestPermissions();
 
     _isInitialized = true;
@@ -40,8 +40,8 @@ class NotificationService {
     print('Threat level: $threatLevel');
     await initialize();
 
-    final severityColor = threatLevel == 'high' 
-        ? const Color(0xFFFF0000) 
+    final severityColor = threatLevel == 'high'
+        ? const Color(0xFFFF0000)
         : const Color(0xFFFF9800);
     print('Severity color: $severityColor');
 
@@ -58,7 +58,9 @@ class NotificationService {
       playSound: true,
       styleInformation: BigTextStyleInformation(
         'Detected $threatLevel threat from $phoneNumber\n\n$messagePreview',
-        contentTitle: threatLevel == 'high' ? '🚨 High Threat Detected' : '⚠️ Suspicious Message',
+        contentTitle: threatLevel == 'high'
+            ? '🚨 High Threat Detected'
+            : '⚠️ Suspicious Message',
         summaryText: 'Security Alert',
       ),
     );
@@ -87,8 +89,10 @@ class NotificationService {
   }
 
   static Future<void> requestPermissions() async {
-    final androidImplementation = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidImplementation != null) {
       await androidImplementation.requestNotificationsPermission();
     }

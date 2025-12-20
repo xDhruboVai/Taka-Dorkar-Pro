@@ -20,7 +20,6 @@ class LocalDatabase {
 
     final db = await openDatabase(path, version: 1, onCreate: _createDatabase);
 
-    // Defensive: Ensure spam_messages table exists even for existing app installs
     await db.execute('''
       CREATE TABLE IF NOT EXISTS spam_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +33,6 @@ class LocalDatabase {
       )
     ''');
 
-    // Ensure required columns exist for SpamMessage model
     await _ensureSpamTableColumns(db);
 
     return db;
@@ -134,7 +132,6 @@ class LocalDatabase {
     ''');
   }
 
-  // Adds missing columns to spam_messages table safely for existing installs
   Future<void> _ensureSpamTableColumns(Database db) async {
     final columnsInfo = await db.rawQuery('PRAGMA table_info(spam_messages)');
     final existingColumns = {
@@ -243,7 +240,6 @@ class LocalDatabase {
     return result.first['last_sync_at'] as String?;
   }
 
-  /// Creates default accounts for a new user
   Future<void> createDefaultAccounts(String userId) async {
     final db = await database;
     final uuid = Uuid();
@@ -346,7 +342,6 @@ class LocalDatabase {
     }
   }
 
-  /// Checks if default accounts already exist for the user
   Future<bool> hasDefaultAccounts(String userId) async {
     final db = await database;
     final result = await db.query(
@@ -357,21 +352,15 @@ class LocalDatabase {
     return result.isNotEmpty;
   }
 
-  // Spam Messages Methods
   Future<int> insertSpamMessage(Map<String, dynamic> spamData) async {
     final db = await database;
-    // Ensure detected_at is set if not provided
     if (!spamData.containsKey('detected_at')) {
       spamData['detected_at'] = DateTime.now().toIso8601String();
     }
-    // Provide sensible defaults for optional fields to avoid NULL issues
     spamData['user_id'] ??= 'local';
     spamData['detection_method'] ??= 'local';
     spamData['is_false_positive'] ??= 0;
-    // Backfill legacy NOT NULL columns so inserts never fail
-    // Use threat_level as prediction if not provided
     spamData['prediction'] ??= spamData['threat_level'] ?? 'unknown';
-    // Use ml/ai confidence as generic confidence fallback
     final mlConf = spamData['ml_confidence'];
     final aiConf = spamData['ai_confidence'];
     spamData['confidence'] ??= (mlConf ?? aiConf ?? 0.8);

@@ -31,13 +31,20 @@ class SpamMessage {
       userId: json['user_id'],
       phoneNumber: json['phone_number'],
       messageText: json['message_text'],
-      detectionMethod: json['detection_method'],
+      detectionMethod: (json['detection_method'] ?? 'local'),
       threatLevel: json['threat_level'],
-      aiConfidence: json['ai_confidence']?.toDouble(),
-      mlConfidence: json['ml_confidence']?.toDouble(),
+      aiConfidence: (json['ai_confidence'] as num?)?.toDouble(),
+      mlConfidence:
+          (json['ml_confidence'] as num?)?.toDouble() ??
+          (json['confidence'] as num?)?.toDouble() ??
+          0.8,
       detectedAt: DateTime.parse(json['detected_at']),
-      isRead: json['is_read'] ?? false,
-      isFalsePositive: json['is_false_positive'] ?? false,
+      isRead: (json['is_read'] is int)
+          ? (json['is_read'] == 1)
+          : (json['is_read'] ?? false),
+      isFalsePositive: (json['is_false_positive'] is int)
+          ? (json['is_false_positive'] == 1)
+          : (json['is_false_positive'] ?? false),
     );
   }
 
@@ -89,7 +96,7 @@ class SecurityStats {
     );
   }
 
-  get threatsBlocked => null;
+  int get threatsBlocked => highThreat + mediumThreat;
 
-  get totalScanned => null;
+  int get totalScanned => today;
 }
