@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
@@ -9,9 +10,11 @@ class NotificationService {
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
-    
+
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
@@ -57,10 +60,11 @@ class NotificationService {
     final title = threatLevel == 'high'
         ? '🚨 High Threat Detected'
         : threatLevel == 'medium'
-            ? '⚠️ Suspicious Message'
-            : 'ℹ️ Spam Detected';
+        ? '⚠️ Suspicious Message'
+        : 'ℹ️ Spam Detected';
 
-    final body = 'From: $phoneNumber\n${messagePreview.substring(0, messagePreview.length > 50 ? 50 : messagePreview.length)}...';
+    final body =
+        'From: $phoneNumber\n${messagePreview.substring(0, messagePreview.length > 50 ? 50 : messagePreview.length)}...';
 
     await _notifications.show(
       DateTime.now().millisecondsSinceEpoch % 100000,
@@ -74,7 +78,8 @@ class NotificationService {
   static Future<void> requestPermissions() async {
     await _notifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
   }
 }
