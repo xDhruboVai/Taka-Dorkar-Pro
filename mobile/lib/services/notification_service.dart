@@ -1,36 +1,31 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
-  static bool _initialized = false;
+  static final _notifications = FlutterLocalNotificationsPlugin();
+  static bool _isInitialized = false;
 
   static Future<void> initialize() async {
-    if (_initialized) return;
+    if (_isInitialized) return;
 
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
 
-    const initSettings = InitializationSettings(
+    const settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
     await _notifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTap,
+      settings,
+      onDidReceiveNotificationResponse: (details) {
+        // Handle notification tap
+        print('Notification tapped: ${details.payload}');
+      },
     );
 
-    _initialized = true;
-  }
-
-  static void _onNotificationTap(NotificationResponse response) {
-    // Handle notification tap
-    print('Notification tapped: ${response.payload}');
+    _isInitialized = true;
+    print('✅ NotificationService initialized');
   }
 
   static Future<void> showSpamDetected({
@@ -38,48 +33,59 @@ class NotificationService {
     required String messagePreview,
     required String threatLevel,
   }) async {
+    print('🔔 Attempting to show notification for: $phoneNumber');
     await initialize();
 
-    const androidDetails = AndroidNotificationDetails(
-      'spam_detection',
-      'Spam Detection',
-      channelDescription: 'Notifications for detected spam messages',
-      importance: Importance.high,
+    final severityColor = threatLevel == 'high' 
+        ? const Color(0xFFFF0000) 
+        : const Color(0xFFFF9800);
+
+    final androidDetails = AndroidNotificationDetails(
+      'security_alerts_v2',
+      'Security Alerts',
+      channelDescription: 'Critical alerts for detected phishing and spam',
+      importance: Importance.max,
       priority: Priority.high,
+      showWhen: true,
       icon: '@mipmap/ic_launcher',
-      color: Color.fromARGB(255, 255, 0, 0),
+      color: severityColor,
+      enableVibration: true,
+      playSound: true,
+      styleInformation: BigTextStyleInformation(
+        'Detected $threatLevel threat from $phoneNumber\n\n$messagePreview',
+        contentTitle: threatLevel == 'high' ? '🚨 High Threat Detected' : '⚠️ Suspicious Message',
+        summaryText: 'Security Alert',
+      ),
     );
 
-    const iosDetails = DarwinNotificationDetails();
-
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
-      iOS: iosDetails,
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
 
-    final title = threatLevel == 'high'
-        ? '🚨 High Threat Detected'
-        : threatLevel == 'medium'
-        ? '⚠️ Suspicious Message'
-        : 'ℹ️ Spam Detected';
-
-    final body =
-        'From: $phoneNumber\n${messagePreview.substring(0, messagePreview.length > 50 ? 50 : messagePreview.length)}...';
-
-    await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch % 100000,
-      title,
-      body,
-      details,
-      payload: phoneNumber,
-    );
+    try {
+      await _notifications.show(
+        DateTime.now().millisecondsSinceEpoch % 100000,
+        threatLevel == 'high' ? '🚨 Security Alert' : '⚠️ Suspicious SMS',
+        'From: $phoneNumber',
+        details,
+        payload: phoneNumber,
+      );
+      print('✅ Notification sent to system');
+    } catch (e) {
+      print('❌ Failed to show notification: $e');
+    }
   }
 
   static Future<void> requestPermissions() async {
-    await _notifications
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+    final androidImplementation = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+    }
   }
 }

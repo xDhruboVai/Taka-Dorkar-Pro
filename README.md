@@ -1,138 +1,189 @@
 # Taka Dorkar Pro
 
-**AI-Driven Finance & Business Management System**
-
-This repository contains the source code for Taka Dorkar Pro, a mobile application built with **Flutter** (Frontend) and **Express.js** (Backend)
+**AI-Driven Finance & Business Management System with SMS Fraud Detection**
 
 ---
 
-## 🏗 Project Architecture (Strict MVC)
+## ⚡ Quick Start (Windows)
 
-This project is mandated to follow the Model-View-Controller (MVC) pattern.
-
-### 1. Mobile (Flutter)
-Located in `mobile/`.
-*   **Models (`mobile/lib/models`)**: Defines data structures (e.g., `Transaction`, `User`) and handles JSON serialization.
-*   **Views (`mobile/lib/views`)**: UI components and screens. These **only** display data and capture user input. They contain NO business logic.
-*   **Controllers (`mobile/lib/controllers`)**: Handle business logic, manage state, and communicate between the View and the Backend Services.
-
-### 2. Backend (Express.js)
-Located in `backend/`.
-*   **Models (`backend/models`)**: Database schemas and direct SQL interactions.
-*   **Controllers (`backend/controllers`)**: Request processing, validation, and business rules.
-*   **Routes (`backend/routes`)**: API endpoints mapping URLs to Controllers.
-*   **Views**: API JSON responses.
+### Prerequisites
+- Node.js (LTS)
+- Flutter SDK
+- Android Studio with emulator
+- PostgreSQL (or Supabase account)
 
 ---
 
-## 🚀 Setup Guide
-
-### prerequisites
-Ensure you have the following installed:
-1.  **Node.js** (LTS Version)
-2.  **Flutter SDK** (Latest Stable)
-3.  **Android Studio** (with Android SDK & Command-line Tools)
-4.  **PostgreSQL** (or access to a cloud instance like Supabase)
-
-### 💻 1. Windows Setup
-**Step 1: Environment Variables**
-Ensure `flutter/bin` and `android/platform-tools` are in your System `PATH`.
-
-**Step 2: Install Dependencies**
-Open PowerShell/Command Prompt:
-```powershell
-# Backend
-cd backend
-npm install
-
-# Mobile
-cd ../mobile
-flutter pub get
-```
-
-**Step 3: Run**
-*   **Backend**: `cd backend` -> `npm run dev`
-*   **Mobile**: Open Android Emulator via Android Studio, then `cd mobile` -> `flutter run`
-
----
-
-### 🍎 2. Mac Setup
-**Step 1: Environment Configuration**
-Add these to your shell config (`~/.zshrc` or `~/.bash_profile`) to identify the Android SDK:
-```bash
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-```
-*Run `source ~/.zshrc` after saving.*
-
-**Step 2: Install Dependencies**
-Open Terminal:
-```bash
-# Backend
-cd backend
-npm install
-
-# Mobile
-cd ../mobile
-flutter pub get
-## 🚀 Getting Started
+## 🚀 Setup & Run
 
 ### 1. Backend Setup (Express.js)
 
-The backend is the heart of the application. It connects to the Supabase PostgreSQL database.
+Open **PowerShell/Command Prompt** and run:
 
-**Prerequisites:**
-- Node.js installed.
-- A `.env` file in the `backend/` directory with `DB_HOST`, `DB_USER`, `DB_PASSWORD` (See `env.example`).
+```powershell
+cd backend
+npm install
+```
 
-**Steps:**
-1.  Open a terminal.
-2.  Navigate to the backend folder:
-    ```bash
-    cd backend
-    ```
-3.  Install dependencies:
-    ```bash
-    npm install
-    ```
-4.  **Run the server:**
-    ```bash
-    npm run dev
-    ```
-    *Do not run `node server.js`. The entry point is `app.js` managed by `nodemon`.*
+Create a `.env` file in `backend/` with your database credentials:
+```
+DB_HOST=your_host
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_NAME=taka_dorkar_pro
+DB_PORT=5432
+GEMINI_API_KEY=your_gemini_key
+```
 
-### 2. Mobile App Setup (Flutter)
+Get Gemini API key from: https://makersuite.google.com/app/apikey
 
-**Prerequisites:**
-- Flutter SDK installed.
-- Android Emulator running or Physical Device connected.
+**Start the backend:**
+```powershell
+npm run dev
+```
 
-**Steps:**
-1.  Open a **new** terminal.
-2.  Navigate to the mobile folder:
-    ```bash
-    cd mobile
-    ```
-3.  Get dependencies:
-    ```bash
-    flutter pub get
-    ```
-4.  **Run the app:**
-    ```bash
-    flutter run
-    ```
+The server will run on `http://localhost:5001`
 
 ---
 
-## 🛠 Troubleshooting
+### 2. Security Backend (Fraud Detection) ⚠️
 
-**Backend Connection Error:**
-If you see `getaddrinfo ENOTFOUND`, your `DB_HOST` in `.env` is incorrect. Ensure you are using the correct Supabase Connection String (Transaction Pooler or Direct).
+The security system needs the `spam_messages` table. Run this **once**:
 
-**Android Build Failure:**
-Run `flutter clean` and then `flutter run` to look for specific errors.
-**"Android License Status Unknown"**
-*   Run: `flutter doctor --android-licenses` and accept all licenses by typing `y`.
+```powershell
+cd backend
+node create_spam_table.js
+```
+
+This creates:
+- `spam_messages` table with all fraud detection fields
+- Indexes for performance
+- Ready for SMS monitoring
+
+**Only run this once!** After that, just use `npm run dev` to start the server.
+
+---
+
+### 3. Mobile Setup (Flutter)
+
+Open **new PowerShell/Command Prompt** and run:
+
+```powershell
+cd mobile
+flutter pub get
+```
+
+Start an emulator in Android Studio, then run:
+
+```powershell
+flutter run
+```
+
+**First launch:**
+1. Grant SMS permissions when prompted
+2. Grant notification permissions
+3. Security tab will be ready to receive spam detections
+
+---
+
+## 📱 Running on Device
+
+```powershell
+# List connected devices/emulators
+flutter devices
+
+# Run on specific device
+flutter run -d <device_id>
+```
+
+---
+
+## 🔒 Security Tab Features
+
+- **Real-time SMS Detection**: ML model detects spam automatically
+- **Hybrid Detection**: ML model (offline) + AI verification (online)
+- **Threat Levels**: High, Medium, Low
+- **Dashboard**: View all detected spam, statistics, mark as safe or delete
+- **Manual Testing**: Test fraud detection with custom messages (bug icon in Security tab)
+
+### How to Test Fraud Detection
+
+1. Open the app and go to Security tab (drawer menu)
+2. Click the **bug icon** (🐛) in top right
+3. Click "Load Test Message" to get a sample spam SMS
+4. Click "Test Now" to run detection
+5. Wait 2 seconds and see results appear in the list
+
+**Test Message (Bangla Spam):**
+```
+সোনালী ব্যাংক অ্যাকাউন্টে সমস্যা হয়েছে। কল করুন: +8801818788890
+```
+
+This will be detected as HIGH threat smishing attempt.
+
+---
+
+## 📂 Project Structure
+
+```
+backend/
+├── controllers/fraudDetectionController.js    # Spam detection API
+├── routes/fraudDetectionRoutes.js             # Security endpoints
+├── models/SpamMessage.js                      # Database model
+├── create_spam_table.js                       # ⭐ Run once for security
+└── .env                                       # Your API keys
+
+mobile/
+├── lib/
+│   ├── views/security_view.dart               # Security dashboard
+│   ├── controllers/security_controller.dart   # State management
+│   ├── services/api_service.dart              # API calls
+│   └── services/sms_monitor_service.dart      # SMS interception
+└── assets/
+    └── fraud_model.tflite                     # ML model
+```
+
+---
+
+## 🛠️ Common Commands
+
+```powershell
+# Backend
+cd backend
+npm run dev           # Start server
+npm install           # Install dependencies
+
+# Mobile  
+cd mobile
+flutter run           # Run on emulator/device
+flutter clean         # Clean build cache
+flutter pub get       # Install dependencies
+
+# Security (one-time setup)
+cd backend
+node create_spam_table.js   # Create fraud detection table
+```
+
+---
+
+## ❓ Troubleshooting
+
+**Backend won't start?**
+- Check `.env` file exists with all credentials
+- Verify PostgreSQL is running
+- Check port 5001 is available
+
+**Mobile won't run?**
+- Run `flutter clean` then `flutter pub get`
+- Make sure Android emulator is running
+- Check backend is running on localhost:5001
+
+**SMS detection not working?**
+- Grant SMS permissions in app
+- Make sure backend is running
+- Check Gemini API key is set in `.env`
+
+**Security table error?**
+- Run `node create_spam_table.js` in backend folder
+- Only needs to be done once
+- If error persists, check database connection

@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:flutter/services.dart';
 
@@ -13,9 +13,20 @@ class FraudDetectionService {
     2: 'smish'
   };
 
+  static bool get isInitialized => _interpreter != null;
+
+  static Completer<void>? _initCompleter;
+
   // Initialize the TFLite model
   static Future<void> initialize() async {
+    if (_interpreter != null) return;
+    
+    if (_initCompleter != null) return _initCompleter!.future;
+    
+    _initCompleter = Completer<void>();
+
     try {
+      print('⏳ Loading TFLite model...');
       // Load model
       _interpreter = await Interpreter.fromAsset('assets/fraud_model.tflite');
       print('✅ TFLite model loaded');
@@ -24,8 +35,14 @@ class FraudDetectionService {
       final vocabJson = await rootBundle.loadString('assets/vocab.json');
       _vocabulary = Map<String, int>.from(json.decode(vocabJson));
       print('✅ Vocabulary loaded: ${_vocabulary!.length} words');
+      
+      _initCompleter!.complete();
     } catch (e) {
       print('❌ Error loading model: $e');
+      _interpreter = null; 
+      final error = e;
+      _initCompleter!.completeError(error);
+      _initCompleter = null;
       rethrow;
     }
   }

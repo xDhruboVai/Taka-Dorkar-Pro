@@ -5,9 +5,12 @@ import 'package:mobile/views/auth/auth_gate.dart';
 import 'package:mobile/widgets/app_theme.dart';
 import 'package:mobile/controllers/account_controller.dart';
 import 'package:mobile/controllers/security_controller.dart';
+import 'package:mobile/services/sms_monitor_service.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   const asciiArt = '''
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣤⣤⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⠀⠀⠀⢀⣴⠟⠉⠀⠀⠀⠈⠻⣦⡀⠀⠀⠀⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -38,6 +41,18 @@ void main() {
   for (var line in asciiArt.split('\n')) {
     debugPrint(line);
   }
+
+  // Start SMS monitoring
+  try {
+    await SmsMonitorService.startMonitoring();
+    // Test notification after 5 seconds to verify logic
+    Future.delayed(Duration(seconds: 5), () {
+      SmsMonitorService.testNotification();
+    });
+  } catch (e) {
+    debugPrint('Error starting SMS monitor: $e');
+  }
+
   runApp(MyApp());
 }
 

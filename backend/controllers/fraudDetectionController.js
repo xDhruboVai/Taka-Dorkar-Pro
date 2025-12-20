@@ -131,28 +131,6 @@ Look for:
         }
     }
 
-    static async getMessageById(req, res) {
-        try {
-            const userId = req.user.id;
-            const { id } = req.params;
-
-            const message = await SpamMessage.findById(id, userId);
-
-            if (!message) {
-                return res.status(404).json({ error: 'Message not found' });
-            }
-
-            res.json({
-                success: true,
-                data: message
-            });
-
-        } catch (error) {
-            console.error('Get message error:', error);
-            res.status(500).json({ error: 'Failed to fetch message' });
-        }
-    }
-
     static async markAsRead(req, res) {
         try {
             const userId = req.user.id;

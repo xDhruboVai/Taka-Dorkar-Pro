@@ -18,7 +18,23 @@ class LocalDatabase {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'taka_dorkar.db');
 
-    return await openDatabase(path, version: 1, onCreate: _createDatabase);
+    final db = await openDatabase(path, version: 1, onCreate: _createDatabase);
+
+    // Defensive: Ensure spam_messages table exists even for existing app installs
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS spam_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone_number TEXT NOT NULL,
+        message_text TEXT NOT NULL,
+        threat_level TEXT NOT NULL,
+        prediction TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        detected_at TEXT NOT NULL,
+        is_read INTEGER DEFAULT 0
+      )
+    ''');
+
+    return db;
   }
 
   Future<void> _createDatabase(Database db, int version) async {
@@ -94,6 +110,19 @@ class LocalDatabase {
         ('accounts', NULL, 'never_synced'),
         ('transactions', NULL, 'never_synced'),
         ('budgets', NULL, 'never_synced')
+    ''');
+
+    await db.execute('''
+      CREATE TABLE spam_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone_number TEXT NOT NULL,
+        message_text TEXT NOT NULL,
+        threat_level TEXT NOT NULL,
+        prediction TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        detected_at TEXT NOT NULL,
+        is_read INTEGER DEFAULT 0
+      )
     ''');
   }
 
@@ -298,5 +327,64 @@ class LocalDatabase {
       whereArgs: [userId, 1],
     );
     return result.isNotEmpty;
+  }
+
+  // Spam Messages Methods
+  Future<int> insertSpamMessage(Map<String, dynamic> spamData) async {
+    final db = await database;
+    // Ensure detected_at is set if not provided
+    if (!spamData.containsKey('detected_at')) {
+      spamData['detected_at'] = DateTime.now().toIso8601String();
+    }
+    return await db.insert(
+      'spam_messages',
+      spamData,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getSpamMessages() async {
+    final db = await database;
+    return await db.query('spam_messages', orderBy: 'detected_at DESC');
+  }
+
+  Future<int> deleteSpamMessage(int id) async {
+    final db = await database;
+    return await db.delete('spam_messages', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> markSpamAsRead(int id) async {
+    final db = await database;
+    return await db.update(
+      'spam_messages',
+      {'is_read': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<Map<String, dynamic>> getLocalSecurityStats() async {
+    final db = await database;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+    final weekStart = now.subtract(Duration(days: 7)).toIso8601String();
+
+    final total = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages')) ?? 0;
+    final unread = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE is_read = 0')) ?? 0;
+    final high = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE threat_level = "high"')) ?? 0;
+    final medium = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE threat_level = "medium"')) ?? 0;
+    final low = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE threat_level = "low"')) ?? 0;
+    final today = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE detected_at >= ?', [todayStart])) ?? 0;
+    final week = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM spam_messages WHERE detected_at >= ?', [weekStart])) ?? 0;
+
+    return {
+      'total': total,
+      'unread': unread,
+      'high_threat': high,
+      'medium_threat': medium,
+      'low_threat': low,
+      'today': today,
+      'this_week': week,
+    };
   }
 }

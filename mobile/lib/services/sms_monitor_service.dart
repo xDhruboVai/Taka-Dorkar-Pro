@@ -1,12 +1,17 @@
-import 'package:telephony/telephony.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import './fraud_detection_service.dart';
 import './notification_service.dart';
 import './api_service.dart';
+import './security_repository.dart';
+import '../models/spam_message.dart';
 
 class SmsMonitorService {
-  static final Telephony telephony = Telephony.instance;
+  static const MethodChannel _channel = MethodChannel('com.example.mobile/sms');
   static bool _isMonitoring = false;
+  static final SecurityRepository _repository = SecurityRepository();
+
+  static bool get isMonitoring => _isMonitoring;
 
   // Request SMS permissions
   static Future<bool> requestPermissions() async {
@@ -30,7 +35,8 @@ class SmsMonitorService {
     if (!hasPerms) {
       final granted = await requestPermissions();
       if (!granted) {
-        throw Exception('SMS permissions not granted');
+        print('⚠️ SMS permissions not granted for monitoring');
+        return;
       }
     }
 
@@ -38,64 +44,103 @@ class SmsMonitorService {
     await FraudDetectionService.initialize();
     await NotificationService.initialize();
 
-    // Listen for incoming SMS
-    telephony.listenIncomingSms(
-      onNewMessage: _onMessageReceived,
-      onBackgroundMessage: _backgroundMessageHandler,
-      listenInBackground: true,
-    );
+    // Catch-up: Scan last 20 messages for missed spam
+    await scanInbox(limit: 20);
+
+    // Listen for incoming SMS via MethodChannel
+    _channel.setMethodCallHandler(_handleMethodCall);
 
     _isMonitoring = true;
-    print('✅ SMS monitoring started');
+    print('✅ SMS monitoring started (via MethodChannel)');
+  }
+
+  // Scan recent inbox messages for missed spam
+  static Future<void> scanInbox({int limit = 50}) async {
+    try {
+      print('🔍 Scanning last $limit inbox messages...');
+      final List<dynamic> messages = await _channel.invokeMethod('getInboxMessages', {'limit': limit});
+      
+      for (var msg in messages) {
+        final String senderAddress = msg['sender'] ?? 'Unknown';
+        final String text = msg['message'] ?? '';
+        
+        // Skip if empty
+        if (text.isEmpty) continue;
+
+        // Process silently
+        await _processSms(senderAddress, text, silent: true);
+      }
+      print('✅ Inbox scan complete');
+    } catch (e) {
+      print('❌ Inbox scan failed: $e');
+    }
   }
 
   // Stop monitoring
   static void stopMonitoring() {
+    _channel.setMethodCallHandler(null);
     _isMonitoring = false;
     print('⏹️ SMS monitoring stopped');
   }
 
-  // Handle incoming SMS
-  static Future<void> _onMessageReceived(SmsMessage message) async {
-    print('📱 New SMS received from: ${message.address}');
-    await _processSms(message);
-  }
-
-  // Background message handler
-  static Future<void> _backgroundMessageHandler(SmsMessage message) async {
-    print('📱 Background SMS: ${message.address}');
-    await FraudDetectionService.initialize();
-    await NotificationService.initialize();
-    await _processSms(message);
+  // Handle incoming method calls from native side
+  static Future<dynamic> _handleMethodCall(MethodCall call) async {
+    switch (call.method) {
+      case 'onSmsReceived':
+        final Map<dynamic, dynamic> args = call.arguments;
+        final String sender = args['sender'] ?? 'Unknown';
+        final String message = args['message'] ?? '';
+        print('📱 New SMS received from: $sender');
+        await _processSms(sender, message);
+        break;
+      case 'onPermissionResult':
+        final bool granted = call.arguments as bool;
+        print('🔑 SMS Permission status: ${granted ? "Granted" : "Denied"}');
+        break;
+      default:
+        print('❓ Unknown method called from native: ${call.method}');
+    }
   }
 
   // Process and detect spam
-  static Future<void> _processSms(SmsMessage message) async {
+  static Future<void> _processSms(String phoneNumber, String messageText, {bool silent = false}) async {
     try {
-      final messageText = message.body ?? '';
-      final phoneNumber = message.address ?? 'Unknown';
-
-      // Skip if empty
       if (messageText.isEmpty) return;
 
+      // Ensure services are initialized
+      await FraudDetectionService.initialize();
+      
       // Run ML detection
       final result = await FraudDetectionService.detectSpam(messageText);
-      
       final isSpam = result['isSpam'] as bool;
       final prediction = result['prediction'] as String;
       final confidence = result['confidence'] as double;
       final threatLevel = result['threatLevel'] as String;
 
-      // If spam detected
       if (isSpam || prediction == 'promo') {
-        // Show notification
-        await NotificationService.showSpamDetected(
+        final spamMsg = SpamMessage(
+          userId: 'local', // Will be updated on sync
           phoneNumber: phoneNumber,
-          messagePreview: messageText,
+          messageText: messageText,
+          detectionMethod: 'ml',
           threatLevel: threatLevel,
+          mlConfidence: confidence,
+          detectedAt: DateTime.now(),
         );
 
-        // Send to backend API
+        // ALWAYS save locally first (Security 2.0 Core)
+        await _repository.saveSpamLocally(spamMsg);
+
+        if (!silent) {
+          await NotificationService.initialize();
+          await NotificationService.showSpamDetected(
+            phoneNumber: phoneNumber,
+            messagePreview: messageText,
+            threatLevel: threatLevel,
+          );
+        }
+
+        // Background sync to backend
         try {
           await ApiService.detectSpam(
             phoneNumber: phoneNumber,
@@ -104,44 +149,20 @@ class SmsMonitorService {
             mlConfidence: confidence,
           );
         } catch (e) {
-          print('❌ Failed to send to backend: $e');
-          // Continue even if backend fails
+          print('⏳ Backend sync pending (saved locally): $phoneNumber');
         }
-
-        print('🚨 Spam detected: $prediction ($threatLevel) - ${(confidence * 100).toStringAsFixed(1)}%');
       }
     } catch (e) {
       print('❌ Error processing SMS: $e');
     }
   }
 
-  // Get SMS inbox (for initial scan)
-  static Future<List<SmsMessage>> getInbox() async {
-    final hasPerms = await hasPermissions();
-    if (!hasPerms) return [];
-
-    final messages = await telephony.getInboxSms(
-      columns: [SmsColumn.ADDRESS, SmsColumn.BODY, SmsColumn.DATE],
-      sortOrder: [OrderBy(SmsColumn.DATE, sort: Sort.DESC)],
+  // Test notification
+  static Future<void> testNotification() async {
+    await NotificationService.showSpamDetected(
+      phoneNumber: 'SEC-TEST',
+      messagePreview: 'This is a simulated smishing attack for validation.',
+      threatLevel: 'high',
     );
-
-    return messages;
-  }
-
-  // Scan existing messages
-  static Future<int> scanExistingMessages({int limit = 50}) async {
-    final messages = await getInbox();
-    int spamCount = 0;
-
-    for (int i = 0; i < messages.length && i < limit; i++) {
-      final message = messages[i];
-      final result = await FraudDetectionService.detectSpam(message.body ?? '');
-      
-      if (result['isSpam'] as bool) {
-        spamCount++;
-      }
-    }
-
-    return spamCount;
   }
 }

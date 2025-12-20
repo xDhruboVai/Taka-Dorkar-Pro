@@ -38,7 +38,7 @@
             android:name="flutterEmbedding"
             android:value="2" />
         
-        <!-- SMS Receiver for background monitoring -->
+        <!-- SMS Receiver for automatic detection -->
         <receiver
             android:name=".SmsReceiver"
             android:exported="true"

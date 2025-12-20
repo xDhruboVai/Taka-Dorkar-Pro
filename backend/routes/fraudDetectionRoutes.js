@@ -12,9 +12,6 @@ router.post('/detect', fraudDetectionController.detectSpam);
 // Get detected messages
 router.get('/messages', fraudDetectionController.getDetectedMessages);
 
-// Get specific message
-router.get('/messages/:id', fraudDetectionController.getMessageById);
-
 // Mark message as read
 router.patch('/messages/:id/read', fraudDetectionController.markAsRead);
 

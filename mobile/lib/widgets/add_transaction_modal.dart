@@ -18,11 +18,21 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  
+
   // Categories
-  final List<String> _categories = ['Food & Dining', 'Transportation', 'Shopping', 'Bills', 'Salary', 'Investment', 'Rent', 'Groceries', 'Utilities'];
+  final List<String> _categories = [
+    'Food & Dining',
+    'Transportation',
+    'Shopping',
+    'Bills',
+    'Salary',
+    'Investment',
+    'Rent',
+    'Groceries',
+    'Utilities',
+  ];
   String? _selectedCategory;
-  
+
   // Accounts
   String? _selectedAccountId;
 
@@ -30,7 +40,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
   void initState() {
     super.initState();
     _selectedCategory = _categories[0];
-    
+
     // Fetch accounts when modal opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AccountController>(context, listen: false).fetchAccounts();
@@ -39,28 +49,41 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
 
   void _submitTransaction() async {
     final authController = Provider.of<AuthController>(context, listen: false);
-    final transactionController = Provider.of<TransactionController>(context, listen: false);
-    final accountController = Provider.of<AccountController>(context, listen: false);
-    
+    final transactionController = Provider.of<TransactionController>(
+      context,
+      listen: false,
+    );
+    final accountController = Provider.of<AccountController>(
+      context,
+      listen: false,
+    );
+
     // Validation
-    if (_amountController.text.isEmpty || double.tryParse(_amountController.text) == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please enter a valid amount')));
+    if (_amountController.text.isEmpty ||
+        double.tryParse(_amountController.text) == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter a valid amount')));
       return;
     }
-    
+
     if (_selectedAccountId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please select an account')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please select an account')));
       return;
     }
 
     final currentUser = authController.currentUser;
     if (currentUser == null) {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You must be logged in')));
-       return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('You must be logged in')));
+      return;
     }
 
     final newTransaction = {
-      'user_id': currentUser.id, 
+      'user_id': currentUser.id,
       'amount': double.parse(_amountController.text),
       'type': _selectedType,
       'category': _selectedCategory,
@@ -74,18 +97,30 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
       // Update account balance locally immediately for UI responsiveness
       // Note: In a real app, backend should handle this sync or we double check.
       // Ideally, specific logic for income (+) vs expense (-)
-      double currentBalance = accountController.accounts.firstWhere((a) => a.id == _selectedAccountId).balance;
+      double currentBalance = accountController.accounts
+          .firstWhere((a) => a.id == _selectedAccountId)
+          .balance;
       double amount = double.parse(_amountController.text);
       if (_selectedType == 'expense') {
-        await accountController.updateAccountBalance(_selectedAccountId!, currentBalance - amount);
+        await accountController.updateAccountBalance(
+          _selectedAccountId!,
+          currentBalance - amount,
+        );
       } else if (_selectedType == 'income') {
-        await accountController.updateAccountBalance(_selectedAccountId!, currentBalance + amount);
+        await accountController.updateAccountBalance(
+          _selectedAccountId!,
+          currentBalance + amount,
+        );
       }
-      
+
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Transaction Added')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Transaction Added')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add transaction')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add transaction')));
     }
   }
 
@@ -97,7 +132,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-             color: isSelected ? Colors.teal : Colors.grey[200],
+            color: isSelected ? Colors.teal : Colors.grey[200],
             borderRadius: BorderRadius.circular(8),
           ),
           alignment: Alignment.center,
@@ -139,14 +174,27 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Add Transaction", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                IconButton(icon: Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                Text(
+                  "Add Transaction",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             SizedBox(height: 20),
-            
+
             // Type Selection
-            Text("TYPE", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+            Text(
+              "TYPE",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
             SizedBox(height: 10),
             Row(
               children: [
@@ -158,9 +206,16 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
               ],
             ),
             SizedBox(height: 20),
-            
+
             // Amount
-            Text("AMOUNT (৳)", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+            Text(
+              "AMOUNT (৳)",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
             SizedBox(height: 10),
             TextField(
               controller: _amountController,
@@ -168,89 +223,139 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.grey[100],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
                 hintText: "0.00",
                 prefixText: "৳ ",
               ),
             ),
             SizedBox(height: 20),
-            
+
             // Category
-            Text("CATEGORY", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+            Text(
+              "CATEGORY",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
             SizedBox(height: 10),
             DropdownButtonFormField<String>(
-               value: _selectedCategory,
-               decoration: InputDecoration(
-                 filled: true,
-                 fillColor: Colors.grey[100],
-                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-               ),
-               items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-               onChanged: (val) => setState(() => _selectedCategory = val),
+              initialValue: _selectedCategory,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: _categories
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedCategory = val),
             ),
             SizedBox(height: 20),
 
             // Account
-            Text("ACCOUNT", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
-            SizedBox(height: 10),
-            accountController.isLoading 
-              ? Center(child: CircularProgressIndicator())
-              : DropdownButtonFormField<String>(
-                 value: _selectedAccountId,
-                 decoration: InputDecoration(
-                   filled: true,
-                   fillColor: Colors.grey[100],
-                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                 ),
-                 items: accounts.map((a) => DropdownMenuItem(value: a.id, child: Text("${a.name} (৳${a.balance})"))).toList(),
-                 onChanged: (val) => setState(() => _selectedAccountId = val),
+            Text(
+              "ACCOUNT",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
-             SizedBox(height: 20),
-            
-            // Date
-            Text("DATE", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
             SizedBox(height: 10),
-             GestureDetector(
-               onTap: () async {
-                 final date = await showDatePicker(
-                   context: context, 
-                   initialDate: _selectedDate, 
-                   firstDate: DateTime(2000), 
-                   lastDate: DateTime(2100)
-                 );
-                 if (date != null) setState(() => _selectedDate = date);
-               },
-               child: Container(
-                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                 decoration: BoxDecoration(
-                   color: Colors.grey[100],
-                   borderRadius: BorderRadius.circular(10),
-                 ),
-                 child: Row(
-                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                   children: [
-                     Text("${_selectedDate.toLocal()}".split(' ')[0]),
-                     Icon(Icons.calendar_today, size: 18),
-                   ],
-                 ),
-               ),
-             ),
-             SizedBox(height: 20),
-            
+            accountController.isLoading
+                ? Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<String>(
+                    initialValue: _selectedAccountId,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: accounts
+                        .map(
+                          (a) => DropdownMenuItem(
+                            value: a.id,
+                            child: Text("${a.name} (৳${a.balance})"),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _selectedAccountId = val),
+                  ),
+            SizedBox(height: 20),
+
+            // Date
+            Text(
+              "DATE",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            SizedBox(height: 10),
+            GestureDetector(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) setState(() => _selectedDate = date);
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("${_selectedDate.toLocal()}".split(' ')[0]),
+                    Icon(Icons.calendar_today, size: 18),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+
             // Note
-            Text("NOTE (OPTIONAL)", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+            Text(
+              "NOTE (OPTIONAL)",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
             SizedBox(height: 10),
             TextField(
               controller: _noteController,
-               decoration: InputDecoration(
+              decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.grey[100],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
                 hintText: "Add a note...",
               ),
             ),
             SizedBox(height: 30),
-            
+
             // Submit Button
             SizedBox(
               width: double.infinity,
@@ -259,11 +364,20 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   padding: EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: Text("Add Transaction", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Add Transaction",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
