@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../controllers/transaction_controller.dart';
@@ -91,7 +92,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
     }
 
     final now = DateTime.now().toIso8601String();
-    final id = const Uuid().v4();
+    final id = Uuid().v4();
     final newTransaction = {
       'id': id,
       'user_id': currentUser.id,

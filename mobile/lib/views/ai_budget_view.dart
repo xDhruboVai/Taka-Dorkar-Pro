@@ -5,6 +5,15 @@ class AiBudgetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('AI Budget View'));
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('AI Budget'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Center(child: Text('AI Budget View')),
+    );
   }
 }

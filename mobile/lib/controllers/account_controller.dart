@@ -55,7 +55,7 @@ class AccountController with ChangeNotifier {
   ) async {
     try {
       final db = LocalDatabase.instance;
-      final uuid = const Uuid();
+      final uuid = Uuid();
       final accountId = uuid.v4();
       final now = DateTime.now().toIso8601String();
 
@@ -126,7 +126,7 @@ class AccountController with ChangeNotifier {
   Future<void> createDefaultAccounts(String userId) async {
     try {
       final db = LocalDatabase.instance;
-      final uuid = const Uuid();
+      final uuid = Uuid();
       final now = DateTime.now().toIso8601String();
 
       final defaultAccounts = [

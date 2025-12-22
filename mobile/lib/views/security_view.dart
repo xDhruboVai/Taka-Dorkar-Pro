@@ -91,6 +91,10 @@ class _SecurityViewState extends State<SecurityView> {
       expandedHeight: 120.0,
       floating: true,
       pinned: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       backgroundColor: isProtected
           ? const Color(0xFF006C4C)
           : const Color(0xFFB3261E),

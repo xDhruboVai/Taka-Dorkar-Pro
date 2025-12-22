@@ -38,6 +38,9 @@ class LocalDatabase {
     // Ensure categories table exists and has default expense categories
     await _ensureCategoriesTableAndSeed(db);
 
+    // Ensure AI Chat History tables exist
+    await _ensureAiChatTables(db);
+
     return db;
   }
 
@@ -167,6 +170,30 @@ class LocalDatabase {
     await addCol('is_false_positive', 'INTEGER DEFAULT 0');
   }
 
+
+  Future<void> _ensureAiChatTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ai_chat_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        text TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES ai_chat_sessions (id) ON DELETE CASCADE
+      )
+    ''');
+  }
+
   Future<void> _ensureCategoriesTableAndSeed(Database db) async {
     // Create table if missing
     await db.execute('''
@@ -190,7 +217,7 @@ class LocalDatabase {
         ? (rows.first['c'] as num).toInt()
         : 0;
     if (count == 0) {
-      final uuid = const Uuid();
+      final uuid = Uuid();
       final now = DateTime.now().toIso8601String();
       final defaults = [
         'Food',
@@ -701,5 +728,116 @@ class LocalDatabase {
       'today': today,
       'this_week': week,
     };
+  }
+
+  Future<Map<String, dynamic>> getFinancialContext(String userId) async {
+    final db = await database;
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1).toIso8601String();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 30)).toIso8601String();
+
+    // 1. Account Balances
+    final accounts = await db.query(
+      'accounts',
+      where: 'user_id = ? AND is_deleted = 0',
+      whereArgs: [userId],
+    );
+
+    // 2. Recent Transactions (Last 30 days)
+    final transactions = await db.query(
+      'transactions',
+      where: 'user_id = ? AND is_deleted = 0 AND date >= ?',
+      whereArgs: [userId, thirtyDaysAgo],
+      orderBy: 'date DESC',
+      limit: 20,
+    );
+
+    // 3. Current Month Budgets
+    final budgets = await db.query(
+      'budgets',
+      where: "user_id = ? AND is_deleted = 0 AND period = 'monthly' AND start_date >= ?",
+      whereArgs: [userId, startOfMonth],
+    );
+
+    // 4. Summarize Spending by Category (Last 30 days) - simplified aggregation
+    // note: doing this in dart for simplicity as rawQuery grouping can be verbose with dates
+    final spendingByCategory = <String, double>{};
+    for (var t in transactions) {
+      if (t['type'] == 'expense' && t['amount'] != null) {
+        final catName = t['category_id'] as String? ?? 'Uncategorized'; // simplistic, ideally join with categories
+        final amt = (t['amount'] as num).toDouble();
+        spendingByCategory[catName] = (spendingByCategory[catName] ?? 0) + amt;
+      }
+    }
+
+    return {
+      'accounts': accounts,
+      'recent_transactions': transactions,
+      'budgets': budgets,
+      'spending_summary_30_days': spendingByCategory,
+    };
+  }
+
+  // --- AI Chat History Methods ---
+
+  Future<void> createChatSession(String id, String userId, String title) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    await db.insert('ai_chat_sessions', {
+      'id': id,
+      'user_id': userId,
+      'title': title,
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  Future<void> updateChatSessionTitle(String id, String title) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    await db.update(
+      'ai_chat_sessions',
+      {'title': title, 'updated_at': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> saveChatMessage(String sessionId, String role, String text) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    await db.insert('ai_chat_messages', {
+      'session_id': sessionId,
+      'role': role,
+      'text': text,
+      'created_at': now,
+    });
+    // Update session timestamp
+    await db.update(
+      'ai_chat_sessions', 
+      {'updated_at': now}, 
+      where: 'id = ?', 
+      whereArgs: [sessionId]
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getUserChatSessions(String userId) async {
+    final db = await database;
+    return await db.query(
+      'ai_chat_sessions',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'updated_at DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getChatMessages(String sessionId) async {
+    final db = await database;
+    return await db.query(
+      'ai_chat_messages',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      orderBy: 'created_at ASC',
+    );
   }
 }

@@ -26,6 +26,7 @@ app.use('/api/fraud', fraudDetectionRoutes);
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/api/budgets', require('./routes/budgetRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
 
 // Server Start
 app.listen(PORT, () => {

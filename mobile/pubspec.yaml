@@ -21,6 +21,7 @@ dependencies:
   tflite_flutter: ^0.12.1
   flutter_local_notifications: ^19.5.0
   permission_handler: ^12.0.1
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
@@ -33,3 +34,4 @@ flutter:
     - assets/images/
     - assets/fraud_model.tflite
     - assets/vocab.json
+    - assets/jordan_bhai.svg
