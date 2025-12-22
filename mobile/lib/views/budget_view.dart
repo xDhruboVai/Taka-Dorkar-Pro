@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/budget_controller.dart';
 
@@ -19,7 +17,7 @@ class _BudgetViewState extends State<BudgetView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BudgetController>().initialize();
+      context.read<BudgetController>().initialize(context);
     });
   }
 
@@ -47,67 +45,94 @@ class _BudgetViewState extends State<BudgetView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedCategoryId,
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                        ),
-                        items: c.expenseCategories
-                            .map(
-                              (cat) => DropdownMenuItem(
-                                value: cat['id'] as String,
-                                child: Text(cat['name'] as String),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedCategoryId = v),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _amountController,
-                        keyboardType: TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: const InputDecoration(labelText: 'Amount'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 100,
-                      child: ElevatedButton(
-                        onPressed: c.isBusy
-                            ? null
-                            : () async {
-                                final id = _selectedCategoryId;
-                                final amt = double.tryParse(
-                                  _amountController.text,
-                                );
-                                if (id == null || amt == null || amt <= 0)
-                                  return;
-                                await c.createBudget(
-                                  categoryId: id,
-                                  amount: amt,
-                                );
-                                _amountController.clear();
-                              },
-                        child: c.isBusy
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                // Responsive input form wraps on small widths
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 420;
+                    final field = <Widget>[
+                      // Category selector
+                      Flexible(
+                        flex: 1,
+                        child: DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          menuMaxHeight: 320,
+                          value: _selectedCategoryId,
+                          decoration: const InputDecoration(
+                            labelText: 'Category',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: c.expenseCategories
+                              .map(
+                                (cat) => DropdownMenuItem(
+                                  value: cat['id'] as String,
+                                  child: Text(
+                                    cat['name'] as String,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
-                            : const Text('Add'),
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedCategoryId = v),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12, height: 12),
+                      // Amount input
+                      Flexible(
+                        flex: 1,
+                        child: TextField(
+                          controller: _amountController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Amount',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12, height: 12),
+                      // Add button
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(minWidth: 96),
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: c.isBusy
+                                ? null
+                                : () async {
+                                    final id = _selectedCategoryId;
+                                    final amt = double.tryParse(
+                                      _amountController.text,
+                                    );
+                                    if (id == null || amt == null || amt <= 0) {
+                                      return;
+                                    }
+                                    await c.createBudget(
+                                      categoryId: id,
+                                      amount: amt,
+                                    );
+                                    _amountController.clear();
+                                  },
+                            child: c.isBusy
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Add'),
+                          ),
+                        ),
+                      ),
+                    ];
+
+                    if (isNarrow) {
+                      return Wrap(spacing: 12, runSpacing: 12, children: field);
+                    }
+                    return Row(children: field);
+                  },
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -137,13 +162,15 @@ class _BudgetViewState extends State<BudgetView> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                        Expanded(
+                                          child: Text(
+                                            name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                         PopupMenuButton<String>(
@@ -164,7 +191,7 @@ class _BudgetViewState extends State<BudgetView> {
                                                       content: TextField(
                                                         controller: ctrl,
                                                         keyboardType:
-                                                            TextInputType.numberWithOptions(
+                                                            const TextInputType.numberWithOptions(
                                                               decimal: true,
                                                             ),
                                                       ),
@@ -208,12 +235,12 @@ class _BudgetViewState extends State<BudgetView> {
                                               await c.deleteBudget(b.id);
                                             }
                                           },
-                                          itemBuilder: (_) => [
-                                            const PopupMenuItem(
+                                          itemBuilder: (_) => const [
+                                            PopupMenuItem(
                                               value: 'edit',
                                               child: Text('Edit'),
                                             ),
-                                            const PopupMenuItem(
+                                            PopupMenuItem(
                                               value: 'delete',
                                               child: Text('Delete'),
                                             ),
@@ -223,11 +250,13 @@ class _BudgetViewState extends State<BudgetView> {
                                     ),
                                     const SizedBox(height: 8),
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          '৳${spent.toStringAsFixed(0)} of ৳${b.amount.toStringAsFixed(0)}',
+                                        Expanded(
+                                          child: Text(
+                                            '৳${spent.toStringAsFixed(0)} of ৳${b.amount.toStringAsFixed(0)}',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         Text(
                                           '${(pct * 100).toStringAsFixed(0)}%',

@@ -7,7 +7,7 @@ class FraudDetectionService {
 
   static Future<Map<String, dynamic>> detectSpam(String messageText) async {
     print(
-      '🔍 Analyzing locally: "${messageText.length > 20 ? messageText.substring(0, 20) + '...' : messageText}"',
+      '🔍 Analyzing locally: "${messageText.length > 20 ? '${messageText.substring(0, 20)}...' : messageText}"',
     );
     return _localHeuristicCheck(messageText);
   }

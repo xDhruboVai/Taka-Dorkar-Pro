@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 class BudgetController extends ChangeNotifier {
   final db = LocalDatabase.instance;
   List<BudgetModel> budgets = [];
-  Map<String, double> _spent = {};
+  final Map<String, double> _spent = {};
   List<Map<String, dynamic>> expenseCategories = [];
   bool isLoading = false;
   bool isBusy = false;
@@ -19,20 +19,29 @@ class BudgetController extends ChangeNotifier {
   );
   String? _userId;
 
-  Future<void> initialize() async {
+  Future<void> initialize(BuildContext context) async {
     isLoading = true;
     notifyListeners();
-    await _ensureUser();
+    await _ensureUser(context);
     await _loadCategories();
     await loadBudgets();
     isLoading = false;
     notifyListeners();
   }
 
-  Future<void> _ensureUser() async {}
+  Future<void> _ensureUser(BuildContext context) async {
+    try {
+      final auth = Provider.of<AuthController>(context, listen: false);
+      _userId = auth.currentUser?.id;
+    } catch (_) {
+      _userId = null;
+    }
+  }
 
   Future<void> _loadCategories() async {
     final uid = _userId ?? 'current_user';
+    // Ensure this user has defaults
+    await db.ensureExpenseCategoriesForUser(uid);
     expenseCategories = await db.getExpenseCategories(uid);
   }
 

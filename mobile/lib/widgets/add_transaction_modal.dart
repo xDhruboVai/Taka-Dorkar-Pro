@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../controllers/transaction_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/account_controller.dart';
@@ -32,9 +33,12 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
     // Fetch accounts and categories when modal opens
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<AccountController>(context, listen: false).fetchAccounts();
-      final cats = await LocalDatabase.instance.getExpenseCategories(
-        'current_user',
-      );
+      // Load categories for the logged-in user; ensure defaults if missing
+      final userId =
+          Provider.of<AuthController>(context, listen: false).currentUser?.id ??
+          'current_user';
+      await LocalDatabase.instance.ensureExpenseCategoriesForUser(userId);
+      final cats = await LocalDatabase.instance.getExpenseCategories(userId);
       setState(() {
         _categories = cats;
         if (_categories.isNotEmpty) {
@@ -274,7 +278,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: _selectedCategoryId,
+              initialValue: _selectedCategoryId,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.grey[100],

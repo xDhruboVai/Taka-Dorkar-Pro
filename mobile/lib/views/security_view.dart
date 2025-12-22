@@ -122,7 +122,7 @@ class _SecurityViewState extends State<SecurityView> {
         Switch(
           value: isProtected,
           onChanged: (_) => controller.toggleMonitoring(),
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: Colors.white.withOpacity(0.3),
         ),
         const SizedBox(width: 16),

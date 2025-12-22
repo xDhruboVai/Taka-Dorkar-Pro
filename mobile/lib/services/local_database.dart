@@ -221,6 +221,48 @@ class LocalDatabase {
     }
   }
 
+  // Ensure default expense categories exist for a specific user id
+  Future<void> ensureExpenseCategoriesForUser(String userId) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      "SELECT COUNT(*) as c FROM categories WHERE user_id = ? AND type = 'expense'",
+      [userId],
+    );
+    final count = rows.isNotEmpty && rows.first['c'] != null
+        ? (rows.first['c'] as num).toInt()
+        : 0;
+    if (count > 0) return;
+
+    final uuid = const Uuid();
+    final now = DateTime.now().toIso8601String();
+    const defaults = [
+      'Food',
+      'Groceries',
+      'Transport',
+      'Bills',
+      'Rent',
+      'Utilities',
+      'Mobile Recharge',
+      'Healthcare',
+      'Education',
+      'Entertainment',
+      'Shopping',
+      'Travel',
+      'Fees',
+    ];
+    for (final name in defaults) {
+      await db.insert('categories', {
+        'id': uuid.v4(),
+        'user_id': userId,
+        'name': name,
+        'type': 'expense',
+        'created_at': now,
+        'updated_at': now,
+        'needs_sync': 1,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+  }
+
   Future<List<Map<String, dynamic>>> query(
     String table, {
     String? where,
