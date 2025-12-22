@@ -49,89 +49,116 @@ class _BudgetViewState extends State<BudgetView> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final isNarrow = constraints.maxWidth < 420;
-                    final field = <Widget>[
-                      // Category selector
-                      Flexible(
-                        flex: 1,
-                        child: DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          menuMaxHeight: 320,
-                          value: _selectedCategoryId,
-                          decoration: const InputDecoration(
-                            labelText: 'Category',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: c.expenseCategories
-                              .map(
-                                (cat) => DropdownMenuItem(
-                                  value: cat['id'] as String,
-                                  child: Text(
-                                    cat['name'] as String,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedCategoryId = v),
-                        ),
+
+                    final categoryField = DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      menuMaxHeight: 320,
+                      initialValue: _selectedCategoryId,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(width: 12, height: 12),
-                      // Amount input
-                      Flexible(
-                        flex: 1,
-                        child: TextField(
-                          controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: const InputDecoration(
-                            labelText: 'Amount',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
+                      items: c.expenseCategories
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat['id'] as String,
+                              child: Text(
+                                cat['name'] as String,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) => setState(() => _selectedCategoryId = v),
+                    );
+
+                    final amountField = TextField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
-                      const SizedBox(width: 12, height: 12),
-                      // Add button
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 96),
-                        child: SizedBox(
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: c.isBusy
-                                ? null
-                                : () async {
-                                    final id = _selectedCategoryId;
-                                    final amt = double.tryParse(
-                                      _amountController.text,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        border: OutlineInputBorder(),
+                      ),
+                    );
+
+                    final addButton = ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 96),
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: c.isBusy
+                              ? null
+                              : () async {
+                                  final id = _selectedCategoryId;
+                                  final amt = double.tryParse(
+                                    _amountController.text,
+                                  );
+                                  if (id == null || amt == null || amt <= 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Select a category and enter a valid amount',
+                                        ),
+                                      ),
                                     );
-                                    if (id == null || amt == null || amt <= 0) {
-                                      return;
-                                    }
-                                    await c.createBudget(
-                                      categoryId: id,
-                                      amount: amt,
-                                    );
+                                    return;
+                                  }
+                                  final ok = await c.createBudget(
+                                    categoryId: id,
+                                    amount: amt,
+                                  );
+                                  if (ok) {
                                     _amountController.clear();
-                                  },
-                            child: c.isBusy
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Add'),
-                          ),
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Failed to add budget. Please ensure you are logged in.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                          child: c.isBusy
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Add'),
                         ),
                       ),
-                    ];
+                    );
 
                     if (isNarrow) {
-                      return Wrap(spacing: 12, runSpacing: 12, children: field);
+                      // In narrow layouts, avoid Flexible inside Wrap to prevent ParentDataWidget errors.
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: categoryField,
+                          ),
+                          SizedBox(width: double.infinity, child: amountField),
+                          addButton,
+                        ],
+                      );
                     }
-                    return Row(children: field);
+
+                    return Row(
+                      children: [
+                        Expanded(child: categoryField),
+                        const SizedBox(width: 12),
+                        Expanded(child: amountField),
+                        const SizedBox(width: 12),
+                        addButton,
+                      ],
+                    );
                   },
                 ),
                 const SizedBox(height: 16),

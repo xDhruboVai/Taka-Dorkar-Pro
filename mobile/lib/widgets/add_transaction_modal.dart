@@ -5,7 +5,7 @@ import '../controllers/transaction_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/account_controller.dart';
 import '../controllers/budget_controller.dart';
-import '../services/local_database.dart';
+import '../services/api_service.dart';
 
 class AddTransactionModal extends StatefulWidget {
   const AddTransactionModal({super.key});
@@ -33,12 +33,19 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
     // Fetch accounts and categories when modal opens
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<AccountController>(context, listen: false).fetchAccounts();
-      // Load categories for the logged-in user; ensure defaults if missing
-      final userId =
-          Provider.of<AuthController>(context, listen: false).currentUser?.id ??
-          'current_user';
-      await LocalDatabase.instance.ensureExpenseCategoriesForUser(userId);
-      final cats = await LocalDatabase.instance.getExpenseCategories(userId);
+      final userId = Provider.of<AuthController>(
+        context,
+        listen: false,
+      ).currentUser?.id;
+      List<Map<String, dynamic>> cats = [];
+      try {
+        final data = await ApiService.get(
+          '/categories?user_id=$userId&type=expense',
+        );
+        if (data is List) {
+          cats = List<Map<String, dynamic>>.from(data);
+        }
+      } catch (_) {}
       setState(() {
         _categories = cats;
         if (_categories.isNotEmpty) {
@@ -90,20 +97,16 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
       'user_id': currentUser.id,
       'amount': double.parse(_amountController.text),
       'type': _selectedType,
-      'category_id': _selectedCategoryId,
+      'category': _categories.firstWhere(
+        (c) => c['id'] == _selectedCategoryId,
+        orElse: () => {'name': null},
+      )['name'],
       'account_id': _selectedAccountId,
       'date': _selectedDate.toIso8601String(),
-      'description': _noteController.text,
+      'note': _noteController.text,
       'created_at': now,
       'updated_at': now,
-      'server_updated_at': null,
-      'is_deleted': 0,
-      'local_updated_at': now,
-      'needs_sync': 1,
     };
-
-    // Local-first insert for immediate budget updates
-    await LocalDatabase.instance.insert('transactions', newTransaction);
 
     // Optional backend post (non-blocking)
     final catName = _categories.firstWhere(
@@ -114,32 +117,15 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
       'user_id': currentUser.id,
       'amount': newTransaction['amount'],
       'type': newTransaction['type'],
-      'category': catName,
+      'category': newTransaction['category'],
       'account_id': newTransaction['account_id'],
       'date': newTransaction['date'],
-      'note': newTransaction['description'],
+      'note': newTransaction['note'],
     });
 
     final success = true;
     if (success) {
-      // Update account balance locally immediately for UI responsiveness
-      // Note: In a real app, backend should handle this sync or we double check.
-      // Ideally, specific logic for income (+) vs expense (-)
-      double currentBalance = accountController.accounts
-          .firstWhere((a) => a.id == _selectedAccountId)
-          .balance;
-      double amount = double.parse(_amountController.text);
-      if (_selectedType == 'expense') {
-        await accountController.updateAccountBalance(
-          _selectedAccountId!,
-          currentBalance - amount,
-        );
-      } else if (_selectedType == 'income') {
-        await accountController.updateAccountBalance(
-          _selectedAccountId!,
-          currentBalance + amount,
-        );
-      }
+      // Optionally re-fetch accounts from backend if needed
 
       // Refresh budgets to reflect new spend in current month
       try {

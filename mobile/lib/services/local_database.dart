@@ -555,6 +555,48 @@ class LocalDatabase {
     return total;
   }
 
+  // Includes legacy local records created under 'current_user' by matching category name
+  Future<double> getSpentForCategoryMonthInclusive(
+    String userId,
+    String categoryId,
+    String? categoryName,
+    DateTime monthStart,
+  ) async {
+    if (categoryName == null || categoryName.isEmpty) {
+      return getSpentForCategoryMonth(userId, categoryId, monthStart);
+    }
+    final db = await database;
+    final start = DateTime(
+      monthStart.year,
+      monthStart.month,
+      1,
+    ).toIso8601String();
+    final end = DateTime(
+      monthStart.year,
+      monthStart.month + 1,
+      1,
+    ).toIso8601String();
+    final rows = await db.rawQuery(
+      '''
+      SELECT SUM(amount) as total FROM (
+        SELECT t.amount as amount
+        FROM transactions t
+        WHERE t.user_id = ? AND t.category_id = ? AND t.type = 'expense' AND t.date >= ? AND t.date < ?
+        UNION ALL
+        SELECT t.amount as amount
+        FROM transactions t
+        JOIN categories c ON c.id = t.category_id
+        WHERE t.user_id = 'current_user' AND c.name = ? AND t.type = 'expense' AND t.date >= ? AND t.date < ?
+      ) allrows
+      ''',
+      [userId, categoryId, start, end, categoryName, start, end],
+    );
+    final total = rows.isNotEmpty && rows.first['total'] != null
+        ? (rows.first['total'] as num).toDouble()
+        : 0.0;
+    return total;
+  }
+
   Future<int> insertSpamMessage(Map<String, dynamic> spamData) async {
     final db = await database;
     if (!spamData.containsKey('detected_at')) {

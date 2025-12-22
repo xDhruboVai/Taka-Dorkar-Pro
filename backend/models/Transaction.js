@@ -12,14 +12,28 @@ class Transaction {
         return rows[0];
     }
 
-    static async findByUserId(user_id) {
-        const query = `
-      SELECT * 
-      FROM transactions 
-      WHERE user_id = $1 
-      ORDER BY date DESC
-    `;
-        const { rows } = await pool.query(query, [user_id]);
+    static async findByUserId(user_id, { type, category, from, to } = {}) {
+        const clauses = ['user_id = $1'];
+        const params = [user_id];
+        let p = 2;
+        if (type) {
+            clauses.push(`type = $${p++}`);
+            params.push(type);
+        }
+        if (category) {
+            clauses.push(`category = $${p++}`);
+            params.push(category);
+        }
+        if (from) {
+            clauses.push(`date >= $${p++}`);
+            params.push(from);
+        }
+        if (to) {
+            clauses.push(`date < $${p++}`);
+            params.push(to);
+        }
+        const query = `SELECT * FROM transactions WHERE ${clauses.join(' AND ')} ORDER BY date DESC`;
+        const { rows } = await pool.query(query, params);
         return rows;
     }
 

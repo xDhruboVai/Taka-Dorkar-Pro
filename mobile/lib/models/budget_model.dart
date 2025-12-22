@@ -20,17 +20,31 @@ class BudgetModel {
   });
 
   static BudgetModel fromLocal(Map<String, dynamic> m) {
+    DateTime _parseDate(dynamic v) {
+      if (v == null) return DateTime.now();
+      if (v is DateTime) return v;
+      if (v is String) return DateTime.parse(v);
+      return DateTime.parse(v.toString());
+    }
+
+    final isDelRaw = m['is_deleted'];
+    final isDel = isDelRaw is bool
+        ? isDelRaw
+        : isDelRaw is num
+        ? isDelRaw != 0
+        : false;
+
     return BudgetModel(
-      id: m['id'] as String,
-      userId: m['user_id'] as String,
-      categoryId: m['category_id'] as String,
-      amount: (m['amount'] as num).toDouble(),
-      period: m['period'] as String,
-      startDate: DateTime.parse(m['start_date'] as String),
-      endDate: m['end_date'] != null
-          ? DateTime.parse(m['end_date'] as String)
-          : null,
-      isDeleted: (m['is_deleted'] as int?) == 1,
+      id: m['id']?.toString() ?? '',
+      userId: m['user_id']?.toString() ?? '',
+      categoryId: m['category_id']?.toString() ?? '',
+      amount: (m['amount'] is num)
+          ? (m['amount'] as num).toDouble()
+          : double.tryParse('${m['amount']}') ?? 0.0,
+      period: m['period']?.toString() ?? 'monthly',
+      startDate: _parseDate(m['start_date']),
+      endDate: m['end_date'] != null ? _parseDate(m['end_date']) : null,
+      isDeleted: isDel,
     );
   }
 

@@ -28,15 +28,15 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Get all transactions for a user
+// Get transactions for a user with optional filters
 router.get('/', async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const { user_id, type, category, from, to } = req.query;
         if (!user_id) {
             return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const transactions = await Transaction.findByUserId(user_id);
+        const transactions = await Transaction.findByUserId(user_id, { type, category, from, to });
         res.json(transactions);
     } catch (error) {
         console.error('Error fetching transactions:', error);
