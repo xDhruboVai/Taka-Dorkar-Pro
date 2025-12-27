@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import '../controllers/transaction_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/account_controller.dart';
@@ -16,22 +15,19 @@ class AddTransactionModal extends StatefulWidget {
 }
 
 class _AddTransactionModalState extends State<AddTransactionModal> {
-  String _selectedType = 'expense'; // 'expense', 'income', 'transfer'
+  String _selectedType = 'expense';
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
-  // Categories from local DB (expense type)
   List<Map<String, dynamic>> _categories = [];
   String? _selectedCategoryId;
 
-  // Accounts
   String? _selectedAccountId;
 
   @override
   void initState() {
     super.initState();
-    // Fetch accounts and categories when modal opens
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<AccountController>(context, listen: false).fetchAccounts();
       final userId = Provider.of<AuthController>(
@@ -58,36 +54,32 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
 
   void _submitTransaction() async {
     final authController = Provider.of<AuthController>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     final transactionController = Provider.of<TransactionController>(
       context,
       listen: false,
     );
-    final accountController = Provider.of<AccountController>(
-      context,
-      listen: false,
-    );
+    // Removed unused accountController
 
-    // Validation
     if (_amountController.text.isEmpty ||
         double.tryParse(_amountController.text) == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Please enter a valid amount')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Please enter a valid amount')),
+      );
       return;
     }
 
     if (_selectedAccountId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Please select an account')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Please select an account')),
+      );
       return;
     }
 
     final currentUser = authController.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('You must be logged in')));
+      messenger.showSnackBar(SnackBar(content: Text('You must be logged in')));
       return;
     }
 
@@ -109,11 +101,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
       'updated_at': now,
     };
 
-    // Optional backend post (non-blocking)
-    final catName = _categories.firstWhere(
-      (c) => c['id'] == _selectedCategoryId,
-      orElse: () => {'name': null},
-    )['name'];
+    // Removed unused catName
     transactionController.addTransaction({
       'user_id': currentUser.id,
       'amount': newTransaction['amount'],
@@ -124,25 +112,15 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
       'note': newTransaction['note'],
     });
 
-    final success = true;
-    if (success) {
-      // Optionally re-fetch accounts from backend if needed
-
-      // Refresh budgets to reflect new spend in current month
+    try {
       try {
         final bc = Provider.of<BudgetController>(context, listen: false);
         await bc.loadBudgets();
       } catch (_) {}
 
-      Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Transaction Added')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to add transaction')));
-    }
+      navigator.pop();
+      messenger.showSnackBar(SnackBar(content: Text('Transaction Added')));
+    } catch (_) {}
   }
 
   Widget _buildTypeButton(String label, String value) {
@@ -174,14 +152,12 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
     final accountController = Provider.of<AccountController>(context);
     final accounts = accountController.accounts;
 
-    // Set default account selection if available and not set
     if (_selectedAccountId == null && accounts.isNotEmpty) {
       _selectedAccountId = accounts.first.id;
     }
 
     return Container(
       padding: EdgeInsets.all(20),
-      // Handle keyboard covering
       margin: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -207,7 +183,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 20),
 
-            // Type Selection
             Text(
               "TYPE",
               style: TextStyle(
@@ -228,7 +203,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 20),
 
-            // Amount
             Text(
               "AMOUNT (৳)",
               style: TextStyle(
@@ -254,7 +228,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 20),
 
-            // Category
             Text(
               "CATEGORY",
               style: TextStyle(
@@ -286,7 +259,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 20),
 
-            // Account
             Text(
               "ACCOUNT",
               style: TextStyle(
@@ -321,7 +293,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
                   ),
             SizedBox(height: 20),
 
-            // Date
             Text(
               "DATE",
               style: TextStyle(
@@ -358,7 +329,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 20),
 
-            // Note
             Text(
               "NOTE (OPTIONAL)",
               style: TextStyle(
@@ -382,7 +352,6 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
             ),
             SizedBox(height: 30),
 
-            // Submit Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

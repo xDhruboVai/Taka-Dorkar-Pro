@@ -91,12 +91,15 @@ class _BudgetViewState extends State<BudgetView> {
                           onPressed: c.isBusy
                               ? null
                               : () async {
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
                                   final id = _selectedCategoryId;
                                   final amt = double.tryParse(
                                     _amountController.text,
                                   );
                                   if (id == null || amt == null || amt <= 0) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    messenger.showSnackBar(
                                       const SnackBar(
                                         content: Text(
                                           'Select a category and enter a valid amount',
@@ -112,7 +115,7 @@ class _BudgetViewState extends State<BudgetView> {
                                   if (ok) {
                                     _amountController.clear();
                                   } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    messenger.showSnackBar(
                                       const SnackBar(
                                         content: Text(
                                           'Failed to add budget. Please ensure you are logged in.',

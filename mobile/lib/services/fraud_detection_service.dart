@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'dart:developer' show log;
 
 class FraudDetectionService {
   static Future<void> initialize() async {
-    print('✅ FraudDetectionService initialized (Local Mode)');
+    log('✅ FraudDetectionService initialized (Local Mode)');
   }
 
   static Future<Map<String, dynamic>> detectSpam(String messageText) async {
-    print(
+    log(
       '🔍 Analyzing locally: "${messageText.length > 20 ? '${messageText.substring(0, 20)}...' : messageText}"',
     );
     return _localHeuristicCheck(messageText);

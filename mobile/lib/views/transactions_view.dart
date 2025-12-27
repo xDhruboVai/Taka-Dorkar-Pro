@@ -16,7 +16,7 @@ class TransactionsView extends StatefulWidget {
 }
 
 class _TransactionsViewState extends State<TransactionsView> {
-  String _selectedPeriod = 'Monthly'; // 'Daily', 'Weekly', 'Monthly'
+  String _selectedPeriod = 'Monthly';
 
   @override
   void initState() {
@@ -24,7 +24,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthController>(context, listen: false);
       if (auth.currentUser != null) {
-        // Parse ID carefully
         String? userId = auth.currentUser?.id;
         if (userId != null) {
           Provider.of<TransactionController>(
@@ -34,7 +33,7 @@ class _TransactionsViewState extends State<TransactionsView> {
           Provider.of<AccountController>(
             context,
             listen: false,
-          ).fetchAccounts(); // Ensure balance is up to date
+          ).fetchAccounts();
         }
       }
     });
@@ -54,23 +53,20 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  // Filter transactions based on selection
   List<TransactionModel> _getFilteredTransactions(
     List<TransactionModel> allTransactions,
   ) {
     final now = DateTime.now();
     return allTransactions.where((t) {
-      final tDate = t.date.toLocal(); // Convert to local time for comparison
+      final tDate = t.date.toLocal();
       if (_selectedPeriod == 'Daily') {
         return tDate.year == now.year &&
             tDate.month == now.month &&
             tDate.day == now.day;
       } else if (_selectedPeriod == 'Weekly') {
-        // Check if date is within the last 7 days
         final difference = now.difference(tDate).inDays;
         return difference >= 0 && difference < 7;
       } else {
-        // Monthly
         return tDate.year == now.year && tDate.month == now.month;
       }
     }).toList();
@@ -116,7 +112,6 @@ class _TransactionsViewState extends State<TransactionsView> {
             );
             return Column(
               children: [
-                // Header Section
                 Container(
                   padding: headerPadding,
                   decoration: BoxDecoration(
@@ -149,7 +144,6 @@ class _TransactionsViewState extends State<TransactionsView> {
                       ),
                       SizedBox(height: isSmall ? 16 : 25),
 
-                      // Main Balance Display (Global Balance)
                       Text(
                         "Spendable Balance",
                         style: TextStyle(color: Colors.white70),
@@ -164,7 +158,6 @@ class _TransactionsViewState extends State<TransactionsView> {
                       ),
                       SizedBox(height: isSmall ? 16 : 25),
 
-                      // Income / Expense Row
                       IntrinsicHeight(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -194,7 +187,6 @@ class _TransactionsViewState extends State<TransactionsView> {
 
                 SizedBox(height: isSmall ? 12 : 20),
 
-                // Tabs
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: isSmall ? 16 : 20),
                   padding: EdgeInsets.all(5),
@@ -217,7 +209,6 @@ class _TransactionsViewState extends State<TransactionsView> {
 
                 SizedBox(height: isSmall ? 12 : 20),
 
-                // List Header
                 Padding(
                   padding: tabPadding,
                   child: Align(
@@ -235,7 +226,6 @@ class _TransactionsViewState extends State<TransactionsView> {
 
                 SizedBox(height: isSmall ? 8 : 10),
 
-                // Transaction List
                 Expanded(
                   child: controller.isLoading
                       ? Center(child: CircularProgressIndicator())
@@ -280,7 +270,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.03),
+                                    color: Colors.black.withValues(alpha: 0.03),
                                     blurRadius: 8,
                                     offset: Offset(0, 2),
                                   ),
@@ -293,7 +283,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                                     decoration: BoxDecoration(
                                       color: tx.type == 'income'
                                           ? Colors.green[50]
-                                          : Colors.red[50], // Consistent colors
+                                          : Colors.red[50],
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(

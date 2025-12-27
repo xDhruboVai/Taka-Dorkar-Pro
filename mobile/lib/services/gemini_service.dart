@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:developer' show log;
 
 class GeminiService {
   static const String _apiKey = 'AIzaSyABCmvGHDYZn4EtHq5vo5BbVXn3PkHOegQ';
@@ -49,7 +50,6 @@ JSON:
         final data = jsonDecode(response.body);
         if (data['candidates'] != null && data['candidates'].isNotEmpty) {
           final content = data['candidates'][0]['content']['parts'][0]['text'];
-          // Clean up markdown code blocks if present
           final cleanContent = content
               .replaceAll('```json', '')
               .replaceAll('```', '')
@@ -57,10 +57,10 @@ JSON:
           return jsonDecode(cleanContent);
         }
       }
-      print('Gemini API Error: ${response.statusCode} - ${response.body}');
+      log('Gemini API Error: ${response.statusCode} - ${response.body}');
       return {};
     } catch (e) {
-      print('Gemini Exception: $e');
+      log('Gemini Exception: $e');
       return {};
     }
   }

@@ -1,5 +1,6 @@
 import 'package:mobile/services/local_database.dart';
 import 'package:mobile/services/api_service.dart';
+import 'dart:developer' show log;
 
 class SyncService {
   static final SyncService instance = SyncService._internal();
@@ -9,18 +10,18 @@ class SyncService {
 
   Future<void> syncAll() async {
     if (_isSyncing) {
-      print('SyncService: Sync already in progress, skipping');
+      log('SyncService: Sync already in progress, skipping');
       return;
     }
 
     _isSyncing = true;
-    print('SyncService: Starting sync...');
+    log('SyncService: Starting sync...');
 
     try {
       await _syncAccounts();
-      print('SyncService: Sync completed successfully');
+      log('SyncService: Sync completed successfully');
     } catch (e) {
-      print('SyncService: Sync failed: $e');
+      log('SyncService: Sync failed: $e');
     } finally {
       _isSyncing = false;
     }
@@ -32,25 +33,25 @@ class SyncService {
       final unsyncedAccounts = await db.getUnsyncedRecords('accounts');
 
       if (unsyncedAccounts.isEmpty) {
-        print('SyncService: No accounts to sync');
+        log('SyncService: No accounts to sync');
         return;
       }
 
-      print('SyncService: Syncing ${unsyncedAccounts.length} accounts...');
+      log('SyncService: Syncing ${unsyncedAccounts.length} accounts...');
 
       for (var account in unsyncedAccounts) {
         try {
           await ApiService.post('/sync/accounts', account);
           await db.markAsSynced('accounts', account['id'] as String);
-          print('SyncService: Synced account ${account['id']}');
+          log('SyncService: Synced account ${account['id']}');
         } catch (e) {
-          print('SyncService: Failed to sync account ${account['id']}: $e');
+          log('SyncService: Failed to sync account ${account['id']}: $e');
         }
       }
 
       await db.updateSyncLog('accounts', DateTime.now().toIso8601String());
     } catch (e) {
-      print('SyncService: Error in _syncAccounts: $e');
+      log('SyncService: Error in _syncAccounts: $e');
     }
   }
 }

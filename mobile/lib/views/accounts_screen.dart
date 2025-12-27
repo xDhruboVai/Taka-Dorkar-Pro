@@ -28,7 +28,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _refreshAccounts() async {
-    await Provider.of<AccountController>(context, listen: false).fetchAccounts();
+    await Provider.of<AccountController>(
+      context,
+      listen: false,
+    ).fetchAccounts();
   }
 
   @override
@@ -49,7 +52,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 children: [
                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  const Text('Failed to load accounts', style: TextStyle(fontSize: 18)),
+                  const Text(
+                    'Failed to load accounts',
+                    style: TextStyle(fontSize: 18),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _refreshAccounts,
@@ -72,13 +78,37 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        _buildCategoryCard('cash', 'Cash', Icons.account_balance_wallet, Colors.green, controller),
+                        _buildCategoryCard(
+                          'cash',
+                          'Cash',
+                          Icons.account_balance_wallet,
+                          Colors.green,
+                          controller,
+                        ),
                         const SizedBox(height: 12),
-                        _buildCategoryCard('mobile_banking', 'Mobile Banking', Icons.phone_android, Colors.orange, controller),
+                        _buildCategoryCard(
+                          'mobile_banking',
+                          'Mobile Banking',
+                          Icons.phone_android,
+                          Colors.orange,
+                          controller,
+                        ),
                         const SizedBox(height: 12),
-                        _buildCategoryCard('bank', 'Bank', Icons.account_balance, Colors.blue, controller),
+                        _buildCategoryCard(
+                          'bank',
+                          'Bank',
+                          Icons.account_balance,
+                          Colors.blue,
+                          controller,
+                        ),
                         const SizedBox(height: 12),
-                        _buildCategoryCard('savings', 'Savings', Icons.savings, Colors.purple, controller),
+                        _buildCategoryCard(
+                          'savings',
+                          'Savings',
+                          Icons.savings,
+                          Colors.purple,
+                          controller,
+                        ),
                       ],
                     ),
                   ),
@@ -92,7 +122,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Widget _buildAppBar(AccountController controller) {
-    final currencyFormat = NumberFormat.currency(locale: 'en_BD', symbol: '৳', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      locale: 'en_BD',
+      symbol: '৳',
+      decimalDigits: 2,
+    );
     final totalBalance = controller.totalBalance;
 
     return SliverAppBar(
@@ -143,11 +177,26 @@ class _AccountsScreenState extends State<AccountsScreen> {
     );
   }
 
-  Widget _buildCategoryCard(String categoryKey, String categoryName, IconData icon, Color color, AccountController controller) {
-    final accounts = controller.accounts.where((acc) => acc.parentType == categoryKey).toList();
-    final categoryTotal = accounts.fold<double>(0, (sum, acc) => sum + acc.balance);
+  Widget _buildCategoryCard(
+    String categoryKey,
+    String categoryName,
+    IconData icon,
+    Color color,
+    AccountController controller,
+  ) {
+    final accounts = controller.accounts
+        .where((acc) => acc.parentType == categoryKey)
+        .toList();
+    final categoryTotal = accounts.fold<double>(
+      0,
+      (sum, acc) => sum + acc.balance,
+    );
     final isExpanded = _expandedCategories[categoryKey] ?? false;
-    final currencyFormat = NumberFormat.currency(locale: 'en_BD', symbol: '৳', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      locale: 'en_BD',
+      symbol: '৳',
+      decimalDigits: 2,
+    );
 
     return Card(
       elevation: 2,
@@ -168,7 +217,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(icon, color: color, size: 28),
@@ -208,7 +257,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   IconButton(
                     icon: const Icon(Icons.add_circle, size: 28),
                     color: color,
-                    onPressed: () => _showAddAccountDialog(categoryKey, categoryName),
+                    onPressed: () =>
+                        _showAddAccountDialog(categoryKey, categoryName),
                   ),
                   Icon(
                     isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -254,7 +304,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Widget _buildAccountTile(Account account, Color categoryColor) {
-    final currencyFormat = NumberFormat.currency(locale: 'en_BD', symbol: '৳', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      locale: 'en_BD',
+      symbol: '৳',
+      decimalDigits: 2,
+    );
 
     return InkWell(
       onTap: () => _showEditBalanceDialog(account),
@@ -262,9 +316,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Colors.grey[200]!),
-          ),
+          border: Border(top: BorderSide(color: Colors.grey[200]!)),
         ),
         child: Row(
           children: [
@@ -278,17 +330,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                account.name,
-                style: const TextStyle(fontSize: 16),
-              ),
+              child: Text(account.name, style: const TextStyle(fontSize: 16)),
             ),
             Text(
               currencyFormat.format(account.balance),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -321,12 +367,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
               onPressed: () {
                 final name = nameController.text.trim();
                 if (name.isNotEmpty) {
-                  Provider.of<AccountController>(context, listen: false).createAccount(
-                    name,
-                    parentType,
-                    parentType,
-                    0,
-                  );
+                  Provider.of<AccountController>(
+                    context,
+                    listen: false,
+                  ).createAccount(name, parentType, parentType, 0);
                   Navigator.pop(context);
                 }
               },
@@ -339,7 +383,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   void _showEditBalanceDialog(Account account) {
-    final balanceController = TextEditingController(text: account.balance.toString());
+    final balanceController = TextEditingController(
+      text: account.balance.toString(),
+    );
 
     showDialog(
       context: context,
@@ -364,7 +410,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
               onPressed: () {
                 final newBalance = double.tryParse(balanceController.text);
                 if (newBalance != null) {
-                  Provider.of<AccountController>(context, listen: false).updateAccountBalance(account.id, newBalance);
+                  Provider.of<AccountController>(
+                    context,
+                    listen: false,
+                  ).updateAccountBalance(account.id, newBalance);
                   Navigator.pop(context);
                 }
               },
@@ -399,7 +448,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
             TextButton(
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               onPressed: () {
-                Provider.of<AccountController>(context, listen: false).deleteAccount(account.id);
+                Provider.of<AccountController>(
+                  context,
+                  listen: false,
+                ).deleteAccount(account.id);
                 Navigator.pop(context);
               },
               child: const Text('Delete'),
@@ -454,7 +506,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           final password = passwordController.text;
                           if (password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enter your password')),
+                              const SnackBar(
+                                content: Text('Please enter your password'),
+                              ),
                             );
                             return;
                           }
@@ -463,20 +517,28 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
                           try {
                             // Verify password by attempting login
-                            final authController = Provider.of<AccountController>(context, listen: false);
+                            final authController =
+                                Provider.of<AccountController>(
+                                  context,
+                                  listen: false,
+                                );
                             // For now, we'll just delete - password verification would require auth controller
                             await authController.deleteAccount(account.id);
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Account deleted successfully')),
+                                const SnackBar(
+                                  content: Text('Account deleted successfully'),
+                                ),
                               );
                             }
                           } catch (e) {
                             setState(() => isLoading = false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: ${e.toString()}')),
+                                SnackBar(
+                                  content: Text('Error: ${e.toString()}'),
+                                ),
                               );
                             }
                           }
@@ -485,9 +547,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Delete', style: TextStyle(color: Colors.white)),
+                      : const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ],
             );

@@ -38,7 +38,7 @@ class SpamDetailView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         border: Border.all(color: color, width: 2),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -61,7 +61,7 @@ class SpamDetailView extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Detected by ${message.detectionMethod}',
-                  style: TextStyle(color: color.withOpacity(0.8)),
+                  style: TextStyle(color: color.withValues(alpha: 0.8)),
                 ),
               ],
             ),

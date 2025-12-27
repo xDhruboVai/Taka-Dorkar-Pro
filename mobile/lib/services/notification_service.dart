@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:developer' show log;
 
 class NotificationService {
   static final _notifications = FlutterLocalNotificationsPlugin();
@@ -21,14 +22,14 @@ class NotificationService {
     await _notifications.initialize(
       settings,
       onDidReceiveNotificationResponse: (details) {
-        print('Notification tapped: ${details.payload}');
+        log('Notification tapped: ${details.payload}');
       },
     );
 
     await requestPermissions();
 
     _isInitialized = true;
-    print('✅ NotificationService initialized');
+    log('✅ NotificationService initialized');
   }
 
   static Future<void> showSpamDetected({
@@ -36,14 +37,14 @@ class NotificationService {
     required String messagePreview,
     required String threatLevel,
   }) async {
-    print('🔔 Attempting to show notification for: $phoneNumber');
-    print('Threat level: $threatLevel');
+    log('🔔 Attempting to show notification for: $phoneNumber');
+    log('Threat level: $threatLevel');
     await initialize();
 
     final severityColor = threatLevel == 'high'
         ? const Color(0xFFFF0000)
         : const Color(0xFFFF9800);
-    print('Severity color: $severityColor');
+    log('Severity color: $severityColor');
 
     final androidDetails = AndroidNotificationDetails(
       'security_alerts_v2',
@@ -82,9 +83,9 @@ class NotificationService {
         details,
         payload: phoneNumber,
       );
-      print('✅ Notification sent to system');
+      log('✅ Notification sent to system');
     } catch (e) {
-      print('❌ Failed to show notification: $e');
+      log('❌ Failed to show notification: $e');
     }
   }
 

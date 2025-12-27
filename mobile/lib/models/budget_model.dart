@@ -20,7 +20,7 @@ class BudgetModel {
   });
 
   static BudgetModel fromLocal(Map<String, dynamic> m) {
-    DateTime _parseDate(dynamic v) {
+    DateTime parseDate(dynamic v) {
       if (v == null) return DateTime.now();
       if (v is DateTime) return v;
       if (v is String) return DateTime.parse(v);
@@ -42,8 +42,8 @@ class BudgetModel {
           ? (m['amount'] as num).toDouble()
           : double.tryParse('${m['amount']}') ?? 0.0,
       period: m['period']?.toString() ?? 'monthly',
-      startDate: _parseDate(m['start_date']),
-      endDate: m['end_date'] != null ? _parseDate(m['end_date']) : null,
+      startDate: parseDate(m['start_date']),
+      endDate: m['end_date'] != null ? parseDate(m['end_date']) : null,
       isDeleted: isDel,
     );
   }

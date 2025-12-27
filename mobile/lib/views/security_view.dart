@@ -127,7 +127,7 @@ class _SecurityViewState extends State<SecurityView> {
           value: isProtected,
           onChanged: (_) => controller.toggleMonitoring(),
           activeThumbColor: Colors.white,
-          activeTrackColor: Colors.white.withOpacity(0.3),
+          activeTrackColor: Colors.white.withValues(alpha: 0.3),
         ),
         const SizedBox(width: 16),
       ],
@@ -142,7 +142,7 @@ class _SecurityViewState extends State<SecurityView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -226,7 +226,7 @@ class _SecurityViewState extends State<SecurityView> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,7 +282,7 @@ class _SecurityViewState extends State<SecurityView> {
         border: Border(left: BorderSide(color: color, width: 4)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -291,7 +291,7 @@ class _SecurityViewState extends State<SecurityView> {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(
             isHighRisk ? Icons.warning_amber : Icons.info_outline,
             color: color,
@@ -320,7 +320,7 @@ class _SecurityViewState extends State<SecurityView> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

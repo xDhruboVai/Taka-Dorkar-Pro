@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/models/account_model.dart';
 import 'package:mobile/services/local_database.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:developer' show log;
 
 class AccountController with ChangeNotifier {
   List<Account> _accounts = [];
@@ -40,7 +41,7 @@ class AccountController with ChangeNotifier {
       _accounts = data.map((item) => Account.fromLocalDb(item)).toList();
     } catch (e) {
       _hasError = true;
-      debugPrint('Error fetching accounts: $e');
+      log('Error fetching accounts: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -76,11 +77,11 @@ class AccountController with ChangeNotifier {
       };
 
       await db.insert('accounts', accountData);
-      print('AccountController: Created account in local DB');
+      log('AccountController: Created account in local DB');
 
       await fetchAccounts();
     } catch (e) {
-      print('AccountController: Error creating account: $e');
+      log('AccountController: Error creating account: $e');
       rethrow;
     }
   }
@@ -101,11 +102,11 @@ class AccountController with ChangeNotifier {
         where: 'id = ?',
         whereArgs: [accountId],
       );
-      print('AccountController: Updated account balance in local DB');
+      log('AccountController: Updated account balance in local DB');
 
       await fetchAccounts();
     } catch (e) {
-      print('AccountController: Error updating account: $e');
+      log('AccountController: Error updating account: $e');
       rethrow;
     }
   }
@@ -114,11 +115,11 @@ class AccountController with ChangeNotifier {
     try {
       final db = LocalDatabase.instance;
       await db.delete('accounts', where: 'id = ?', whereArgs: [accountId]);
-      print('AccountController: Deleted account from local DB');
+      log('AccountController: Deleted account from local DB');
 
       await fetchAccounts();
     } catch (e) {
-      print('AccountController: Error deleting account: $e');
+      log('AccountController: Error deleting account: $e');
       rethrow;
     }
   }
@@ -161,10 +162,10 @@ class AccountController with ChangeNotifier {
         await db.insert('accounts', accountData);
       }
 
-      print('AccountController: Created default accounts in local DB');
+      log('AccountController: Created default accounts in local DB');
       await fetchAccounts();
     } catch (e) {
-      print('AccountController: Error creating default accounts: $e');
+      log('AccountController: Error creating default accounts: $e');
       rethrow;
     }
   }

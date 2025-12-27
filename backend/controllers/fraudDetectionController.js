@@ -1,7 +1,6 @@
 const SpamMessage = require('../models/SpamMessage');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
@@ -22,32 +21,27 @@ class FraudDetectionController {
             let aiConfidence = null;
             let finalPrediction = mlPrediction || 'unknown';
 
-            // Use AI for verification if confidence is low or smish detected
             if ((mlConfidence && mlConfidence < 0.85) || finalPrediction === 'smish') {
                 try {
                     const aiResult = await FraudDetectionController.analyzeWithAI(messageText);
                     aiConfidence = aiResult.confidence;
                     detectionMethod = 'both';
 
-                    // Update prediction if AI has different opinion
                     if (aiResult.isSpam) {
                         finalPrediction = 'smish';
                         threatLevel = aiResult.threatLevel;
                     }
                 } catch (error) {
                     console.error('AI analysis failed:', error);
-                    // Continue with ML prediction
                 }
             }
 
-            // Determine threat level based on prediction
             if (finalPrediction === 'smish') {
                 threatLevel = mlConfidence > 0.95 ? 'high' : 'medium';
             } else if (finalPrediction === 'promo') {
                 threatLevel = 'low';
             }
 
-            // Save the spam message
             const spamMessage = await SpamMessage.create({
                 user_id: userId,
                 phone_number: phoneNumber,
@@ -93,13 +87,11 @@ Look for:
         const response = await result.response;
         const text = response.text();
 
-        // Extract JSON from response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             return JSON.parse(jsonMatch[0]);
         }
 
-        // Fallback
         return {
             isSpam: false,
             threatLevel: 'low',

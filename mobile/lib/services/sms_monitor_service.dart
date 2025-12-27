@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'dart:developer' show log;
 import 'package:permission_handler/permission_handler.dart';
 import './fraud_detection_service.dart';
 import './notification_service.dart';
@@ -32,7 +33,7 @@ class SmsMonitorService {
     if (!hasPerms) {
       final granted = await requestPermissions();
       if (!granted) {
-        print('⚠️ SMS permissions not granted for monitoring');
+        log('⚠️ SMS permissions not granted for monitoring');
         return;
       }
     }
@@ -40,7 +41,7 @@ class SmsMonitorService {
     try {
       await FraudDetectionService.initialize();
     } catch (e) {
-      print(
+      log(
         '❌ Error initializing FraudDetectionService: $e. Continuing without ML detection.',
       );
     }
@@ -51,12 +52,12 @@ class SmsMonitorService {
     _channel.setMethodCallHandler(_handleMethodCall);
 
     _isMonitoring = true;
-    print('✅ SMS monitoring started (via MethodChannel)');
+    log('✅ SMS monitoring started (via MethodChannel)');
   }
 
   static Future<void> scanInbox({int limit = 50}) async {
     try {
-      print('🔍 Scanning last $limit inbox messages...');
+      log('🔍 Scanning last $limit inbox messages...');
       final List<dynamic> messages = await _channel.invokeMethod(
         'getInboxMessages',
         {'limit': limit},
@@ -70,16 +71,16 @@ class SmsMonitorService {
 
         await _processSms(senderAddress, text, silent: true);
       }
-      print('✅ Inbox scan complete');
+      log('✅ Inbox scan complete');
     } catch (e) {
-      print('❌ Inbox scan failed: $e');
+      log('❌ Inbox scan failed: $e');
     }
   }
 
   static void stopMonitoring() {
     _channel.setMethodCallHandler(null);
     _isMonitoring = false;
-    print('⏹️ SMS monitoring stopped');
+    log('⏹️ SMS monitoring stopped');
   }
 
   static Future<dynamic> _handleMethodCall(MethodCall call) async {
@@ -88,15 +89,15 @@ class SmsMonitorService {
         final Map<dynamic, dynamic> args = call.arguments;
         final String sender = args['sender'] ?? 'Unknown';
         final String message = args['message'] ?? '';
-        print('📱 New SMS received from: $sender');
+        log('📱 New SMS received from: $sender');
         await _processSms(sender, message);
         break;
       case 'onPermissionResult':
         final bool granted = call.arguments as bool;
-        print('🔑 SMS Permission status: ${granted ? "Granted" : "Denied"}');
+        log('🔑 SMS Permission status: ${granted ? "Granted" : "Denied"}');
         break;
       default:
-        print('❓ Unknown method called from native: ${call.method}');
+        log('❓ Unknown method called from native: ${call.method}');
     }
   }
 
@@ -146,11 +147,11 @@ class SmsMonitorService {
             mlConfidence: confidence,
           );
         } catch (e) {
-          print('⏳ Backend sync pending (saved locally): $phoneNumber');
+          log('⏳ Backend sync pending (saved locally): $phoneNumber');
         }
       }
     } catch (e) {
-      print('❌ Error processing SMS: $e');
+      log('❌ Error processing SMS: $e');
     }
   }
 

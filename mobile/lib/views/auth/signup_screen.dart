@@ -7,10 +7,10 @@ class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  _SignupScreenState createState() => _SignupScreenState();
+  SignupScreenState createState() => SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -113,6 +113,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         ? null
                         : () async {
                             if (_formKey.currentState!.validate()) {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final navigator = Navigator.of(context);
                               try {
                                 await authController.signup(
                                   _nameController.text.trim(),
@@ -120,26 +122,22 @@ class _SignupScreenState extends State<SignupScreen> {
                                   _phoneController.text.trim(),
                                   _passwordController.text.trim(),
                                 );
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Account Created Successfully",
-                                      ),
-                                      backgroundColor: Colors.green,
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Account Created Successfully",
                                     ),
-                                  );
-                                  Navigator.pop(context); // Go back to login
-                                }
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                navigator.pop(); // Go back to login
                               } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(e.toString()),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.toString()),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
                               }
                             }
                           },

@@ -12,7 +12,6 @@ exports.chatWithGemini = async (req, res) => {
             return res.status(400).json({ error: "Message is required" });
         }
 
-        // System Instruction: Finance Only + Context Awareness
         const systemInstruction = `
         You are Jordan Bhai, a helpful and knowledgeable financial assistant. 
         Your goal is to assist the user with their personal finances based on the provided data.
