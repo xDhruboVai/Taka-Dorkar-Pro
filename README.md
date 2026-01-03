@@ -12,6 +12,7 @@ Simple setup to run the backend (Express) and mobile app (Flutter).
 
 ### Backend
 ```powershell
+node backend/scripts/setup_python.js
 cd backend
 npm install
 npm run dev
